@@ -232,7 +232,7 @@ switchBtn.onclick=function(){
   beep(multi?880:520,.08,'triangle',.1);
   hapticLight();
 };
-[26.08.2026 18:28] кидди: /* Секретный Force Signal: 5 тапов по логотипу 1WIN */
+/* Секретный Force Signal: 5 тапов по логотипу 1WIN */
 var taps=0;
 $('logo').onclick=function(){taps++;if(taps>=5){taps=0;FORCE=!FORCE;$('adminBadge').hidden=!FORCE;hapticLight();}};
 
