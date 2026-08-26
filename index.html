@@ -1,754 +1,454 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#050b14">
-<title>Mines — Sinais IA</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-[hidden]{display:none!important}
-*::before,*::after{pointer-events:none}
-html,body{height:100%;user-select:none;-webkit-user-select:none}
-body{
-  font-family:'Segoe UI',Roboto,Arial,sans-serif;
-  color:#dfe6f2;
-  overflow-x:hidden;
-  background:radial-gradient(circle at 50% 35%,#0d1e38 0%,#050b14 75%) fixed;
-}
-.col{
-  width:96vw;
-  max-width:430px;
-  margin:0 auto;
-  padding:16px 0 40px;
-  position:relative;
-  z-index:2;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Mines — Sinais IA</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-/* КНОПКИ */
-button{
-  cursor:pointer;
-  touch-action:manipulation;
-  position:relative;
-  z-index:99;
-}
+    body {
+      background: radial-gradient(circle at 50% 30%, #0d1b3e 0%, #060b19 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
 
-/* HEADER */
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.logo{
-  font-style:italic;
-  font-weight:900;
-  font-size:26px;
-  letter-spacing:.5px;
-  user-select:none;
-  text-shadow:0 0 14px rgba(60,160,255,.55);
-}
-.logo .w{color:#fff}
-.logo .b{color:#2f9beb}
-.switch{
-  background:linear-gradient(180deg,#3b9df0,#1f7fd6);
-  border:none;
-  border-radius:10px;
-  padding:10px 16px;
-  color:#fff;
-  font-size:13px;
-  font-weight:700;
-  box-shadow:0 4px 14px rgba(40,130,240,.35);
-}
-.switch:active{transform:scale(.97)}
+    .container {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
 
-/* STATUS BAR */
-.status{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  margin:2px 0 12px;
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:1.6px;
-}
-.status .dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:currentColor;
-  animation:pulse 1.1s infinite;
-}
-.status.idle{color:#8b93a7}
-.status.an{color:#4fc3f7}
-.status.ok{color:#2ee56e}
-@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+    /* Верхняя панель */
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
 
-/* BOARD WRAP + CRYSTALS */
-.board-wrap{
-  position:relative;
-  width:max-content;
-  margin:0 auto;
-  padding:10px;
-  background:#081426;
-  border:1.5px solid #00c8ff;
-  border-radius:20px;
-  box-shadow:0 0 25px rgba(0,200,255,0.35),inset 0 0 15px rgba(0,150,255,0.15);
-}
-.board-wrap::before{
-  content:'';
-  position:absolute;
-  left:-26px;
-  top:24%;
-  width:20px;
-  height:46px;
-  --r:12deg;
-  background:linear-gradient(135deg,#e0faff 0%,#00d2ff 60%,#006699 100%);
-  clip-path:polygon(50% 0,78% 28%,64% 55%,100% 78%,58% 100%,42% 68%,0 52%,30% 30%);
-  filter:drop-shadow(0 0 10px rgba(0,220,255,0.8));
-  opacity:0.85;
-  animation:float 3.5s ease-in-out infinite;
-}
-.board-wrap::after{
-  content:'';
-  position:absolute;
-  right:-26px;
-  top:50%;
-  width:18px;
-  height:44px;
-  --r:-14deg;
-  background:linear-gradient(135deg,#e0faff 0%,#00d2ff 60%,#006699 100%);
-  clip-path:polygon(50% 0,80% 30%,62% 52%,100% 76%,56% 100%,40% 66%,0 50%,32% 28%);
-  filter:drop-shadow(0 0 10px rgba(0,220,255,0.8));
-  opacity:0.85;
-  animation:float 3.5s ease-in-out infinite;
-  animation-delay:1.7s;
-}
-@keyframes float{
-  0%,100%{transform:rotate(var(--r)) translateY(0)}
-  50%{transform:rotate(var(--r)) translateY(-6px)}
-}
-.board{
-  width:290px;
-  height:290px;
-  display:grid;
-  grid-template-columns:repeat(5,52px);
-  grid-template-rows:repeat(5,52px);
-  gap:6px;
-  justify-content:center;
-  align-content:center;
-  margin:0 auto;
-}
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      font-style: italic;
+      color: #0080ff;
+      text-shadow: 0 0 15px rgba(0, 128, 255, 0.6);
+      cursor: pointer;
+    }
 
-/* CELLS */
-.cell{
-  width:52px;
-  height:52px;
-  min-width:52px;
-  min-height:52px;
-  border-radius:12px;
-  overflow:hidden;
-  background:radial-gradient(circle at 50% 25%,#2be4ff 0%,#00a8d6 55%,#00688a 100%);
-  border:1px solid rgba(0,0,0,.4);
-  border-top:1.5px solid #a6f4ff;
-  box-shadow:inset 0 -3px 5px rgba(0,30,50,0.8),0 3px 6px rgba(0,0,0,0.45);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.cell.scan{
-  filter:brightness(1.8);
-  box-shadow:0 0 12px rgba(120,220,255,.9);
-}
-.cell.open,.cell.boom{
-  background:#091322;
-  border-color:transparent;
-  box-shadow:none;
-}
-.cell.open svg,.cell.boom svg{
-  width:85%;
-  height:85%;
-  display:block;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-  animation:starPop 0.25s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
-}
-@keyframes starPop{
-  0%{transform:scale(0) rotate(-20deg);opacity:0}
-  55%{transform:scale(1.18) rotate(6deg);opacity:1}
-  75%{transform:scale(0.95) rotate(-2deg)}
-  100%{transform:scale(1) rotate(0deg);opacity:1}
-}
-@media (max-width:340px){
-  .board-wrap{transform:scale(.86);transform-origin:top center;margin-bottom:-40px}
-}
+    .badge {
+      background: rgba(0, 140, 255, 0.15);
+      border: 1px solid #0080ff;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
 
-/* PANELS */
-.panel{
-  margin-top:12px;
-  border-radius:14px;
-  background:#141a24;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:10px 12px;
-  gap:10px;
-}
-.sel{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  background:#0d1219;
-  border-radius:12px;
-  padding:8px 20px;
-}
-.sel button{
-  background:none;
-  border:none;
-  color:#8b93a7;
-  font-size:20px;
-  line-height:1;
-  padding:6px 12px;
-  border-radius:8px;
-  transition:transform .08s;
-}
-.sel button:active{
-  color:#fff;
-  background:rgba(80,150,255,.18);
-  transform:scale(.9);
-}
-.sel b{
-  color:#fff;
-  font-size:16px;
-  min-width:16px;
-  text-align:center;
-}
-.sel small{
-  color:#8b93a7;
-  font-size:12px;
-  font-weight:600;
-}
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #22c55e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
 
-/* CONTROLS */
-.controls{
-  margin-top:12px;
-  border-radius:14px;
-  background:#141a24;
-  padding:12px;
-}
-.play{
-  display:block;
-  width:100%;
-  height:42px;
-  background:#0077ff;
-  border:none;
-  border-radius:10px;
-  color:#fff;
-  font-size:16px;
-  font-weight:800;
-  letter-spacing:.5px;
-  box-shadow:0 4px 14px rgba(0,119,255,.35);
-}
-.play:active{transform:scale(.98)}
-.back{
-  display:block;
-  width:90px;
-  height:32px;
-  background:#962d18;
-  border:none;
-  border-radius:8px;
-  color:#ffd9c9;
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.5px;
-  margin:10px auto 0;
-}
-.back:active{transform:scale(.96)}
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+      animation: pulse 1.5s infinite;
+    }
 
-/* ADMIN MODAL & FLOATING BTN */
-.admin-trigger{
-  position:fixed;
-  bottom:12px;
-  right:12px;
-  z-index:99999;
-  background:#ffb400;
-  color:#000;
-  border:none;
-  padding:8px 12px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:bold;
-  box-shadow:0 0 12px rgba(255,180,0,0.6);
-}
-.admin-modal{
-  position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.85);
-  backdrop-filter:blur(5px);
-  z-index:999999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.admin-box{
-  background:#141a24;
-  border:1.5px solid #00c8ff;
-  padding:18px;
-  border-radius:16px;
-  width:90%;
-  max-width:340px;
-  text-align:center;
-}
-.admin-grid{
-  display:grid;
-  grid-template-columns:repeat(5, 1fr);
-  gap:6px;
-  margin:14px 0;
-}
-.admin-cell{
-  aspect-ratio:1;
-  background:#091426;
-  border:1px solid #203550;
-  border-radius:8px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#8b9bb4;
-  font-size:13px;
-  font-weight:bold;
-  cursor:pointer;
-}
-.admin-cell.active{
-  background:#00c853;
-  color:#000;
-  border-color:#a6f4ff;
-  box-shadow:0 0 8px rgba(0,200,83,0.8);
-}
-.admin-btn-row{
-  display:flex;
-  gap:10px;
-}
-.admin-btn{
-  flex:1;
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  font-weight:bold;
-  font-size:13px;
-}
-.admin-btn.save{background:#00c8ff;color:#000;}
-.admin-btn.reset{background:#e53935;color:#fff;}
-</style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Игровое поле */
+    .grid-wrapper {
+      position: relative;
+      background: rgba(10, 25, 55, 0.7);
+      border: 2px solid #0080ff;
+      box-shadow: 0 0 25px rgba(0, 128, 255, 0.35);
+      border-radius: 20px;
+      padding: 12px;
+      width: 100%;
+      aspect-ratio: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 8px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .cell {
+      background: linear-gradient(145deg, #1c3d73, #0f2447);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 160, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell.star {
+      background: radial-gradient(circle, #ffe066 0%, #f59e0b 80%);
+      border: 1px solid #fbbf24;
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.85);
+      transform: scale(1.05);
+    }
+
+    .cell.star::after {
+      content: "⭐";
+      font-size: 20px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); }
+      70% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* Селектор мин */
+    .mines-counter {
+      background: rgba(7, 18, 38, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 16px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .counter-btn {
+      background: none;
+      border: none;
+      color: #38bdf8;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0 10px;
+    }
+
+    /* Кнопка генерации */
+    .btn-main {
+      width: 100%;
+      background: linear-gradient(90deg, #0072ff, #00d4ff);
+      border: none;
+      border-radius: 14px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 15px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 160, 255, 0.4);
+      transition: transform 0.1s ease, filter 0.2s ease;
+    }
+
+    .btn-main:active {
+      transform: scale(0.98);
+      filter: brightness(0.9);
+    }
+
+    .btn-main:disabled {
+      filter: grayscale(0.8);
+      cursor: not-allowed;
+    }
+
+    /* Админ-кнопка */
+    #adminToggleBtn {
+      display: none;
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      background: #eab308;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      cursor: pointer;
+      z-index: 999;
+    }
+
+    /* Админ-модалка */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: #0d1b3e;
+      border: 1px solid #0080ff;
+      border-radius: 18px;
+      padding: 16px;
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .admin-cell {
+      background: #172a54;
+      border: 1px solid #234585;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 8px;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .admin-cell.selected {
+      background: #22c55e;
+      color: #000;
+      border-color: #4ade80;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-save { background: #22c55e; color: #000; }
+    .btn-reset { background: #ef4444; color: #fff; }
+  </style>
 </head>
 <body>
 
-<div class="col">
-
-  <div class="header">
-    <div class="logo">
-      <span class="w">1</span><span class="b">WIN</span>
+  <div class="container">
+    <div class="header">
+      <div class="logo" id="appLogo">1WIN</div>
+      <div class="badge">IA BOT v4.2</div>
     </div>
-    <button class="switch" id="switchBtn">Modo Múltiplo</button>
-  </div>
 
-  <div class="status idle" id="status">
-    <span class="dot"></span><span id="statusTxt">AGUARDANDO SINAL...</span>
-  </div>
-
-  <div class="board-wrap">
-    <div class="board" id="board">
-      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span id="statusText">Aguardando Sinal...</span>
     </div>
-  </div>
 
-  <div class="panel">
-    <div class="sel">
-      <button id="tMinus" class="traps-ctrl">‹</button>
-      <b id="trapVal">1</b>
-      <small>minas</small>
-      <button id="tPlus" class="traps-ctrl">›</button>
+    <div class="grid-wrapper">
+      <div class="grid" id="gameGrid"></div>
     </div>
+
+    <div class="mines-counter">
+      <button class="counter-btn" id="btnMinus">−</button>
+      <span><span id="minesCount">3</span> MINAS</span>
+      <button class="counter-btn" id="btnPlus">+</button>
+    </div>
+
+    <button class="btn-main" id="btnGenerate">GERAR SINAL</button>
   </div>
 
-  <div class="controls">
-    <button class="play" id="playBtn">GERAR SINAL</button>
-    <button class="back" id="backBtn">FECHAR</button>
-  </div>
+  <!-- Админ панель -->
+  <button id="adminToggleBtn">⚙️ Настроить ячейки</button>
 
-</div>
-
-<button class="admin-trigger" id="adminTrigger" onclick="openAdminModal()" hidden>⚙️ Настроить ячейки</button>
-
-<div class="admin-modal" id="adminModal" hidden>
-  <div class="admin-box">
-    <h3 style="color:#00c8ff;font-size:16px;">Выбери ячейки для видео</h3>
-    <div class="admin-grid" id="adminGrid"></div>
-    <div class="admin-btn-row">
-      <button class="admin-btn reset" onclick="clearCustomSelection()">Сброс</button>
-      <button class="admin-btn save" onclick="closeAdminModal()">Сохранить</button>
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-content">
+      <h3 style="font-size: 15px; text-align: center;">Выбери ячейки для видео</h3>
+      <div class="admin-grid" id="adminGrid"></div>
+      <div class="modal-actions">
+        <button class="modal-btn btn-reset" id="btnAdminReset">Сброс</button>
+        <button class="modal-btn btn-save" id="btnAdminSave">Сохранить</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if (tg) {
-  try {
-    tg.ready();
-    tg.expand();
-  } catch (e) {}
-}
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) { tg.expand(); }
 
-var boardEl = document.getElementById('board');
-var cells = Array.prototype.slice.call(boardEl.children);
-var statusEl = document.getElementById('status');
-var statusTxt = document.getElementById('statusTxt');
-var trapValEl = document.getElementById('trapVal');
-var switchBtn = document.getElementById('switchBtn');
-var adminTrigger = document.getElementById('adminTrigger');
-var adminModal = document.getElementById('adminModal');
-var adminGrid = document.getElementById('adminGrid');
-var tMinusEl = document.getElementById('tMinus');
-var tPlusEl = document.getElementById('tPlus');
-var playBtnEl = document.getElementById('playBtn');
-var backBtnEl = document.getElementById('backBtn');
+    const gridEl = document.getElementById('gameGrid');
+    const adminGridEl = document.getElementById('adminGrid');
+    const statusText = document.getElementById('statusText');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+    const adminModal = document.getElementById('adminModal');
+    const appLogo = document.getElementById('appLogo');
 
-var traps = 1;
-var multi = false;
-var busy = false;
-var FORCE = false;
-var customSelectedCells = [];
+    let mines = 3;
+    let customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]');
 
-// Проверка ссылки на секретный ключ (?admin=dev77)
-var urlParams = new URLSearchParams(window.location.search);
-var isAdmin = (urlParams.get('admin') === 'dev77');
-if (isAdmin) {
-  adminTrigger.hidden = false;
-}
+    // Создание 25 ячеек
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      gridEl.appendChild(cell);
 
-var AC = null;
-function getAudioContext() {
-  if (!AC) {
-    var AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) AC = new AudioCtx();
-  }
-  if (AC && AC.state === 'suspended') {
-    AC.resume();
-  }
-  return AC;
-}
-
-function tone(freq, dur, type, gain, delay) {
-  try {
-    var ctx = getAudioContext();
-    if (!ctx) return;
-    var t = ctx.currentTime + (delay || 0);
-    var osc = ctx.createOscillator();
-    var gn = ctx.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.setValueAtTime(freq, t);
-    gn.gain.setValueAtTime(gain || 0.15, t);
-    gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    osc.connect(gn);
-    gn.connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + dur + 0.02);
-  } catch (e) {}
-}
-
-function hapticLight() {
-  if (tg && tg.HapticFeedback) {
-    try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
-  }
-}
-function hapticSuccess() {
-  if (tg && tg.HapticFeedback) {
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-  }
-}
-
-var STAR_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
-  '<defs>' +
-  '  <linearGradient id="starBase" x1="0%" y1="0%" x2="0%" y2="100%">' +
-  '    <stop offset="0%" stop-color="#fff59d"/>' +
-  '    <stop offset="25%" stop-color="#ffb300"/>' +
-  '    <stop offset="70%" stop-color="#fb8c00"/>' +
-  '    <stop offset="100%" stop-color="#d84315"/>' +
-  '  </linearGradient>' +
-  '  <linearGradient id="facetLight" x1="0%" y1="0%" x2="100%" y2="100%">' +
-  '    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>' +
-  '    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>' +
-  '  </linearGradient>' +
-  '  <filter id="starGlow" x="-20%" y="-20%" width="140%" height="140%">' +
-  '    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/>' +
-  '    <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffb300" flood-opacity="0.7"/>' +
-  '  </filter>' +
-  '</defs>' +
-  '<g filter="url(#starGlow)">' +
-  '  <polygon points="50,6 64,34 95,36 71,57 79,88 50,71 21,88 29,57 5,36 36,34" fill="url(#starBase)" stroke="#bf360c" stroke-width="1.2" stroke-linejoin="round"/>' +
-  '  <polygon points="50,6 50,71 21,88 29,57 5,36 36,34" fill="#000" opacity="0.14"/>' +
-  '  <polygon points="50,6 64,34 50,71" fill="url(#facetLight)"/>' +
-  '  <polygon points="50,6 36,34 50,71" fill="#fff" opacity="0.25"/>' +
-  '  <polygon points="95,36 71,57 50,71" fill="url(#facetLight)"/>' +
-  '  <circle cx="50" cy="48" r="7" fill="#fff" opacity="0.4" filter="blur(2px)"/>' +
-  '</g>' +
-  '</svg>';
-
-var CROSS_SVG =
-  '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
-  '<defs>' +
-  '  <linearGradient id="iceBar" x1="0%" y1="0%" x2="100%" y2="100%">' +
-  '    <stop offset="0%" stop-color="#ffffff"/>' +
-  '    <stop offset="25%" stop-color="#c2f0ff"/>' +
-  '    <stop offset="65%" stop-color="#4db8ff"/>' +
-  '    <stop offset="100%" stop-color="#1268a8"/>' +
-  '  </linearGradient>' +
-  '</defs>' +
-  '<g transform="rotate(45 50 50)" stroke="#094573" stroke-width="1">' +
-  '  <rect x="41" y="10" width="18" height="80" rx="9" fill="url(#iceBar)"/>' +
-  '  <rect x="10" y="41" width="80" height="18" rx="9" fill="url(#iceBar)"/>' +
-  '  <rect x="46" y="14" width="8" height="72" rx="4" fill="#ffffff" opacity="0.55"/>' +
-  '</g>' +
-  '</svg>';
-
-function setStatus(mode) {
-  if (mode === 'an') {
-    statusEl.className = 'status an';
-    statusTxt.textContent = 'ANALISANDO COM IA...';
-  } else if (mode === 'ok') {
-    statusEl.className = 'status ok';
-    statusTxt.textContent = 'SINAL CONFIRMADO ✅';
-  } else {
-    statusEl.className = 'status idle';
-    statusTxt.textContent = 'AGUARDANDO SINAL...';
-  }
-}
-
-function clearBoard() {
-  cells.forEach(function (c) {
-    c.className = 'cell';
-    c.innerHTML = '';
-  });
-}
-
-function shuffle(arr) {
-  for (var i = arr.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-  }
-  return arr;
-}
-
-function bindAction(el, fn) {
-  if (!el || !fn) return;
-  var lastDown = 0;
-  el.addEventListener('pointerdown', function (ev) {
-    lastDown = Date.now();
-    fn();
-  });
-  el.addEventListener('click', function (ev) {
-    if (Date.now() - lastDown < 350) return;
-    fn();
-  });
-}
-
-function initAdminGrid() {
-  adminGrid.innerHTML = '';
-  for (var i = 0; i < 25; i++) {
-    var d = document.createElement('div');
-    d.className = 'admin-cell' + (customSelectedCells.indexOf(i) >= 0 ? ' active' : '');
-    d.textContent = (i + 1);
-    (function(idx, el){
-      el.onclick = function() {
-        var pos = customSelectedCells.indexOf(idx);
-        if (pos >= 0) {
-          customSelectedCells.splice(pos, 1);
-          el.classList.remove('active');
-        } else {
-          customSelectedCells.push(idx);
-          el.classList.add('active');
-        }
-      };
-    })(i, d);
-    adminGrid.appendChild(d);
-  }
-}
-
-function openAdminModal() {
-  if (!isAdmin) return;
-  initAdminGrid();
-  adminModal.hidden = false;
-  tone(880, 0.08, 'square', 0.18);
-  hapticLight();
-}
-
-function closeAdminModal() {
-  adminModal.hidden = true;
-  FORCE = customSelectedCells.length > 0;
-  tone(1200, 0.08, 'square', 0.18);
-  hapticLight();
-}
-
-function clearCustomSelection() {
-  customSelectedCells = [];
-  initAdminGrid();
-  FORCE = false;
-}
-
-function onSwitchMode() {
-  if (busy) return;
-  multi = !multi;
-  switchBtn.textContent = multi ? 'Modo Único' : 'Modo Múltiplo';
-  tone(multi ? 880 : 520, 0.08, 'triangle', 0.18);
-  hapticLight();
-}
-
-function onTrapsMinus() {
-  if (busy) return;
-  traps = Math.max(1, traps - 1);
-  trapValEl.textContent = traps;
-  tone(420, 0.06, 'sine', 0.1);
-  hapticLight();
-}
-
-function onTrapsPlus() {
-  if (busy) return;
-  traps = Math.min(24, traps + 1);
-  trapValEl.textContent = traps;
-  tone(640, 0.06, 'sine', 0.1);
-  hapticLight();
-}
-
-function scanBoard(callback) {
-  setStatus('an');
-  var count = 0;
-  var scanTimer = setInterval(function () {
-    var idx = Math.floor(Math.random() * cells.length);
-    var c = cells[idx];
-    c.classList.add('scan');
-    setTimeout(function () { c.classList.remove('scan'); }, 140);
-    tone(1400, 0.03, 'square', 0.12);
-    count++;
-  }, 80);
-  setTimeout(function () {
-    clearInterval(scanTimer);
-    callback();
-  }, 1600);
-}
-
-function revealSingle(trapSet, safeSet) {
-  var starIdx;
-  if (FORCE && customSelectedCells.length > 0) {
-    starIdx = customSelectedCells.slice();
-  } else {
-    var PICKS_MIN = 3, PICKS_MAX = 5;
-    var n = PICKS_MIN + Math.floor(Math.random() * (PICKS_MAX - PICKS_MIN + 1));
-    starIdx = shuffle(safeSet.slice()).slice(0, n);
-  }
-  var seq = starIdx.slice();
-  var step = 0;
-  function next() {
-    if (step >= seq.length) {
-      tone(660, 0.12, 'triangle', 0.18, 0);
-      tone(880, 0.12, 'triangle', 0.18, 0.08);
-      tone(1180, 0.16, 'sine', 0.18, 0.16);
-      hapticSuccess();
-      setStatus('ok');
-      busy = false;
-      return;
+      const aCell = document.createElement('div');
+      aCell.className = 'admin-cell' + (customStars.includes(i) ? ' selected' : '');
+      aCell.textContent = i + 1;
+      aCell.dataset.index = i;
+      aCell.addEventListener('click', () => {
+        aCell.classList.toggle('selected');
+      });
+      adminGridEl.appendChild(aCell);
     }
-    var idx = seq[step++];
-    var c = cells[idx];
-    c.classList.add('open');
-    c.innerHTML = STAR_SVG;
-    tone(760 + step * 65, 0.10, 'triangle', 0.18);
-    hapticLight();
-    setTimeout(next, 170);
-  }
-  next();
-}
 
-function revealMulti(trapSet, safeSet) {
-  var order = [];
-  safeSet.forEach(function (i) { order.push({ i: i, t: 'star' }); });
-  trapSet.forEach(function (i) { order.push({ i: i, t: 'trap' }); });
-  shuffle(order);
-  var step = 0;
-  var delay = 30;
-  function next() {
-    if (step >= order.length) {
-      tone(660, 0.12, 'triangle', 0.18, 0);
-      tone(880, 0.12, 'triangle', 0.18, 0.08);
-      tone(1180, 0.16, 'sine', 0.18, 0.16);
-      hapticSuccess();
-      setStatus('ok');
-      busy = false;
-      return;
-    }
-    var item = order[step++];
-    var c = cells[item.i];
-    c.classList.add('open');
-    if (item.t === 'trap') {
-      c.classList.add('boom');
-      c.innerHTML = CROSS_SVG;
-      tone(220, 0.14, 'sawtooth', 0.2);
-      tone(110, 0.20, 'square', 0.25, 0.05);
-    } else {
-      c.innerHTML = STAR_SVG;
-      tone(820 + step * 40, 0.08, 'triangle', 0.16);
-    }
-    hapticLight();
-    setTimeout(next, delay);
-  }
-  next();
-}
+    // Секретный вход в админку
+    const urlParams = new URLSearchParams(window.location.search);
+    let logoClicks = 0;
 
-function onPlay() {
-  if (busy) return;
-  busy = true;
-  clearBoard();
-  hapticLight();
-  tone(260, 0.12, 'sawtooth', 0.18);
-  tone(320, 0.10, 'sawtooth', 0.18, 0.08);
-  scanBoard(function () {
-    var pool = [];
-    for (var i = 0; i < cells.length; i++) {
-      if (!(FORCE && customSelectedCells.indexOf(i) >= 0)) {
-        pool.push(i);
+    function showAdminBtn() {
+      adminToggleBtn.style.display = 'block';
+    }
+
+    if (urlParams.get('admin') === 'dev77') {
+      showAdminBtn();
+    }
+
+    appLogo.addEventListener('click', () => {
+      logoClicks++;
+      if (logoClicks >= 5) {
+        adminToggleBtn.style.display = (adminToggleBtn.style.display === 'block') ? 'none' : 'block';
+        logoClicks = 0;
       }
-    }
-    shuffle(pool);
-    var trapSet = pool.slice(0, Math.min(traps, pool.length));
-    var safeSet = [];
-    for (var j = 0; j < cells.length; j++) {
-      if (trapSet.indexOf(j) === -1) safeSet.push(j);
-    }
-    if (multi) {
-      revealMulti(trapSet, safeSet);
-    } else {
-      revealSingle(trapSet, safeSet);
-    }
-  });
-}
+    });
 
-function onBack() {
-  if (busy) return;
-  clearBoard();
-  setStatus('idle');
-  tone(420, 0.10, 'triangle', 0.18);
-  hapticLight();
-  if (tg) {
-    try { tg.close(); } catch (e) {}
-  }
-}
+    adminToggleBtn.addEventListener('click', () => {
+      adminModal.style.display = 'flex';
+    });
 
-bindAction(switchBtn, onSwitchMode);
-bindAction(tMinusEl, onTrapsMinus);
-bindAction(tPlusEl, onTrapsPlus);
-bindAction(playBtnEl, onPlay);
-bindAction(backBtnEl, onBack);
+    document.getElementById('btnAdminSave').addEventListener('click', () => {
+      const selected = Array.from(adminGridEl.querySelectorAll('.admin-cell.selected'))
+        .map(el => parseInt(el.dataset.index, 10));
+      customStars = selected;
+      localStorage.setItem('custom_mines_stars', JSON.stringify(customStars));
+      adminModal.style.display = 'none';
+    });
 
-setStatus('idle');
-</script>
+    document.getElementById('btnAdminReset').addEventListener('click', () => {
+      customStars = [];
+      localStorage.removeItem('custom_mines_stars');
+      adminGridEl.querySelectorAll('.admin-cell').forEach(c => c.classList.remove('selected'));
+      adminModal.style.display = 'none';
+    });
+
+    // Мины +/-
+    document.getElementById('btnMinus').addEventListener('click', () => {
+      if (mines > 1) { mines--; document.getElementById('minesCount').textContent = mines; }
+    });
+    document.getElementById('btnPlus').addEventListener('click', () => {
+      if (mines < 7) { mines++; document.getElementById('minesCount').textContent = mines; }
+    });
+
+    // Генерация сигнала
+    btnGenerate.addEventListener('click', () => {
+      btnGenerate.disabled = true;
+      statusText.textContent = 'Analisando algoritmo...';
+      statusText.style.color = '#38bdf8';
+
+      // Очистка предыдущих звезд
+      gridEl.querySelectorAll('.cell').forEach(c => c.classList.remove('star'));
+
+      // Анимация поиска
+      let flashes = 0;
+      const flashInterval = setInterval(() => {
+        const randIndex = Math.floor(Math.random() * 25);
+        const cell = gridEl.children[randIndex];
+        cell.style.background = '#00d4ff';
+        setTimeout(() => {
+          cell.style.background = '';
+        }, 120);
+        flashes++;
+
+        if (flashes > 12) {
+          clearInterval(flashInterval);
+          revealSignal();
+        }
+      }, 100);
+    });
+
+    function revealSignal() {
+      let targets = [];
+
+      if (customStars.length > 0) {
+        targets = [...customStars];
+      } else {
+        const count = Math.max(3, 6 - mines);
+        const indices = Array.from({ length: 25 }, (_, i) => i);
+        indices.sort(() => Math.random() - 0.5);
+        targets = indices.slice(0, count);
+      }
+
+      targets.forEach((idx, i) => {
+        setTimeout(() => {
+          gridEl.children[idx].classList.add('star');
+        }, i * 180);
+      });
+
+      setTimeout(() => {
+        statusText.textContent = 'Sinal Confirmado!';
+        statusText.style.color = '#22c55e';
+        btnGenerate.disabled = false;
+      }, targets.length * 180 + 200);
+    }
+  </script>
 </body>
 </html>
