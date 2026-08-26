@@ -176,9 +176,6 @@ button{
   75%{transform:scale(0.95) rotate(-2deg)}
   100%{transform:scale(1) rotate(0deg);opacity:1}
 }
-.cell.admin-hint{
-  box-shadow:0 0 0 2px rgba(255,90,120,0.9);
-}
 @media (max-width:340px){
   .board-wrap{transform:scale(.86);transform-origin:top center;margin-bottom:-40px}
 }
@@ -265,7 +262,7 @@ button{
 }
 .back:active{transform:scale(.96)}
 
-/* ADMIN BADGE */
+/* ADMIN MODAL & BADGE */
 .badge{
   position:fixed;
   top:8px;
@@ -278,7 +275,66 @@ button{
   border-radius:8px;
   font-size:12px;
   font-weight:700;
+  cursor:pointer;
 }
+.admin-modal{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(5px);
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.admin-box{
+  background:#141a24;
+  border:1.5px solid #00c8ff;
+  padding:18px;
+  border-radius:16px;
+  width:90%;
+  max-width:340px;
+  text-align:center;
+}
+.admin-grid{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:6px;
+  margin:14px 0;
+}
+.admin-cell{
+  aspect-ratio:1;
+  background:#091426;
+  border:1px solid #203550;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#8b9bb4;
+  font-size:13px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.admin-cell.active{
+  background:#00c853;
+  color:#000;
+  border-color:#a6f4ff;
+  box-shadow:0 0 8px rgba(0,200,83,0.8);
+}
+.admin-btn-row{
+  display:flex;
+  gap:10px;
+}
+.admin-btn{
+  flex:1;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  font-weight:bold;
+  font-size:13px;
+}
+.admin-btn.save{background:#00c8ff;color:#000;}
+.admin-btn.reset{background:#e53935;color:#fff;}
 </style>
 </head>
 <body>
@@ -322,7 +378,19 @@ button{
 
 </div>
 
-<div class="badge" id="adminBadge" hidden>🛠 SINAL FORÇADO: ATIVO</div>
+<div class="badge" id="adminBadge" onclick="openAdminModal()" hidden>🛠 CUSTOM SINAL (ATIVO)</div>
+
+<!-- Скрытое админ-меню выбора клеток -->
+<div class="admin-modal" id="adminModal" hidden>
+  <div class="admin-box">
+    <h3 style="color:#00c8ff;font-size:16px;">Выбери ячейки для видео</h3>
+    <div class="admin-grid" id="adminGrid"></div>
+    <div class="admin-btn-row">
+      <button class="admin-btn reset" onclick="clearCustomSelection()">Сброс</button>
+      <button class="admin-btn save" onclick="closeAdminModal()">Сохранить</button>
+    </div>
+  </div>
+</div>
 
 <script>
 var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -340,6 +408,8 @@ var statusTxt = document.getElementById('statusTxt');
 var trapValEl = document.getElementById('trapVal');
 var switchBtn = document.getElementById('switchBtn');
 var adminBadge = document.getElementById('adminBadge');
+var adminModal = document.getElementById('adminModal');
+var adminGrid = document.getElementById('adminGrid');
 var logoEl = document.getElementById('logo');
 var tMinusEl = document.getElementById('tMinus');
 var tPlusEl = document.getElementById('tPlus');
@@ -350,6 +420,7 @@ var traps = 1;
 var multi = false;
 var busy = false;
 var FORCE = false;
+var customSelectedCells = [];
 
 var AC = null;
 function getAudioContext() {
@@ -477,6 +548,7 @@ function bindAction(el, fn) {
   });
 }
 
+// 5 быстрых тапов по логотипу открывают панель
 var logoTapCount = 0;
 var logoTapTimer = null;
 function onLogo() {
@@ -485,12 +557,52 @@ function onLogo() {
   logoTapTimer = setTimeout(function () { logoTapCount = 0; }, 800);
   if (logoTapCount >= 5) {
     logoTapCount = 0;
-    FORCE = !FORCE;
-    adminBadge.hidden = !FORCE;
-    tone(880, 0.08, 'square', 0.18);
-    tone(1200, 0.08, 'square', 0.18, 0.08);
-    hapticLight();
+    openAdminModal();
   }
+}
+
+function initAdminGrid() {
+  adminGrid.innerHTML = '';
+  for (var i = 0; i < 25; i++) {
+    var d = document.createElement('div');
+    d.className = 'admin-cell' + (customSelectedCells.indexOf(i) >= 0 ? ' active' : '');
+    d.textContent = (i + 1);
+    (function(idx, el){
+      el.onclick = function() {
+        var pos = customSelectedCells.indexOf(idx);
+        if (pos >= 0) {
+          customSelectedCells.splice(pos, 1);
+          el.classList.remove('active');
+        } else {
+          customSelectedCells.push(idx);
+          el.classList.add('active');
+        }
+      };
+    })(i, d);
+    adminGrid.appendChild(d);
+  }
+}
+
+function openAdminModal() {
+  initAdminGrid();
+  adminModal.hidden = false;
+  tone(880, 0.08, 'square', 0.18);
+  hapticLight();
+}
+
+function closeAdminModal() {
+  adminModal.hidden = true;
+  FORCE = customSelectedCells.length > 0;
+  adminBadge.hidden = !FORCE;
+  tone(1200, 0.08, 'square', 0.18);
+  hapticLight();
+}
+
+function clearCustomSelection() {
+  customSelectedCells = [];
+  initAdminGrid();
+  FORCE = false;
+  adminBadge.hidden = true;
 }
 
 function onSwitchMode() {
@@ -535,14 +647,12 @@ function scanBoard(callback) {
 }
 
 function revealSingle(trapSet, safeSet) {
-  var PICKS_MIN = 3, PICKS_MAX = 5;
-  var n = PICKS_MIN + Math.floor(Math.random() * (PICKS_MAX - PICKS_MIN + 1));
-  var corners = [0, 4, 20, 24];
   var starIdx;
-  if (FORCE) {
-    starIdx = corners.slice();
-    if (starIdx.length > n) starIdx = starIdx.slice(0, n);
+  if (FORCE && customSelectedCells.length > 0) {
+    starIdx = customSelectedCells.slice();
   } else {
+    var PICKS_MIN = 3, PICKS_MAX = 5;
+    var n = PICKS_MIN + Math.floor(Math.random() * (PICKS_MAX - PICKS_MIN + 1));
     starIdx = shuffle(safeSet.slice()).slice(0, n);
   }
   var seq = starIdx.slice();
@@ -560,7 +670,6 @@ function revealSingle(trapSet, safeSet) {
     var idx = seq[step++];
     var c = cells[idx];
     c.classList.add('open');
-    if (FORCE && corners.indexOf(idx) >= 0) c.classList.add('admin-hint');
     c.innerHTML = STAR_SVG;
     tone(760 + step * 65, 0.10, 'triangle', 0.18);
     hapticLight();
@@ -595,7 +704,6 @@ function revealMulti(trapSet, safeSet) {
       tone(220, 0.14, 'sawtooth', 0.2);
       tone(110, 0.20, 'square', 0.25, 0.05);
     } else {
-      if (FORCE && [0, 4, 20, 24].indexOf(item.i) >= 0) c.classList.add('admin-hint');
       c.innerHTML = STAR_SVG;
       tone(820 + step * 40, 0.08, 'triangle', 0.16);
     }
@@ -613,10 +721,9 @@ function onPlay() {
   tone(260, 0.12, 'sawtooth', 0.18);
   tone(320, 0.10, 'sawtooth', 0.18, 0.08);
   scanBoard(function () {
-    var corners = [0, 4, 20, 24];
     var pool = [];
     for (var i = 0; i < cells.length; i++) {
-      if (!(FORCE && corners.indexOf(i) >= 0)) {
+      if (!(FORCE && customSelectedCells.indexOf(i) >= 0)) {
         pool.push(i);
       }
     }
