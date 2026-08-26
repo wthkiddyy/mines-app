@@ -7,23 +7,14 @@
 <title>Mines — Signal IA</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 *::before,*::after{pointer-events:none}
-button,.btn,.switch,.traps-ctrl{
-  cursor:pointer;
-  pointer-events:auto;
-  touch-action:auto!important;
-  user-select:none;
-  -webkit-user-select:none;
-  z-index:9999;
-  position:relative;
-}
-html,body{height:100%}
+html,body{height:100%;user-select:none;-webkit-user-select:none}
 body{
   font-family:'Segoe UI',Roboto,Arial,sans-serif;
   color:#dfe6f2;
-  overflow:auto;
+  overflow-x:hidden;
   background:radial-gradient(circle at 50% 35%,#0d1e38 0%,#050b14 75%) fixed;
 }
 .col{
@@ -34,6 +25,15 @@ body{
   position:relative;
   z-index:2;
 }
+
+/* КНОПКИ */
+button{
+  cursor:pointer;
+  touch-action:manipulation;
+  position:relative;
+  z-index:99;
+}
+
 /* HEADER */
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .logo{
@@ -283,41 +283,20 @@ body{
 </head>
 <body>
 
-<svg width="0" height="0" style="display:none;position:absolute">
-  <defs>
-    <linearGradient id="caveStarMain" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffcc80"/>
-      <stop offset="35%" stop-color="#ffa726"/>
-      <stop offset="75%" stop-color="#fb8c00"/>
-      <stop offset="100%" stop-color="#e65100"/>
-    </linearGradient>
-    <radialGradient id="caveStarHighlight" cx="50%" cy="38%" r="45%">
-      <stop offset="0%" stop-color="#fff8e1" stop-opacity="0.9"/>
-      <stop offset="50%" stop-color="#ffe082" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#ffa726" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="iceBar" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="25%" stop-color="#c2f0ff"/>
-      <stop offset="65%" stop-color="#4db8ff"/>
-      <stop offset="100%" stop-color="#1268a8"/>
-    </linearGradient>
-  </defs>
-</svg>
-
 <div class="col">
 
   <div class="header">
-    <div class="logo" id="logo" onclick="onLogo(event)" ontouchend="onLogo(event)">
+    <div class="logo" id="logo">
       <span class="w">1</span><span class="b">WIN</span>
     </div>
-    <button class="switch" id="switchBtn" onclick="onSwitchMode(event)" ontouchend="onSwitchMode(event)">Switch to multiple</button>
+    <button class="switch" id="switchBtn">Switch to multiple</button>
   </div>
 
   <div class="status idle" id="status">
     <span class="dot"></span><span id="statusTxt">AGUARDANDO COMANDO...</span>
   </div>
-   <div class="board-wrap">
+
+  <div class="board-wrap">
     <div class="board" id="board">
       <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
       <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
@@ -329,16 +308,16 @@ body{
 
   <div class="panel">
     <div class="sel">
-      <button id="tMinus" class="traps-ctrl" onclick="onTrapsMinus(event)" ontouchend="onTrapsMinus(event)">‹</button>
+      <button id="tMinus" class="traps-ctrl">‹</button>
       <b id="trapVal">1</b>
       <small>traps</small>
-      <button id="tPlus" class="traps-ctrl" onclick="onTrapsPlus(event)" ontouchend="onTrapsPlus(event)">›</button>
+      <button id="tPlus" class="traps-ctrl">›</button>
     </div>
   </div>
 
   <div class="controls">
-    <button class="play" id="playBtn" onclick="onPlay(event)" ontouchend="onPlay(event)">Play</button>
-    <button class="back" id="backBtn" onclick="onBack(event)" ontouchend="onBack(event)">Back</button>
+    <button class="play" id="playBtn">Play</button>
+    <button class="back" id="backBtn">Back</button>
   </div>
 
 </div>
@@ -346,28 +325,72 @@ body{
 <div class="badge" id="adminBadge" hidden>🛠 FORCE SIGNAL: ON</div>
 
 <script>
-var tg = null;
-try{
-  if(window.Telegram && window.Telegram.WebApp){
-    tg = window.Telegram.WebApp;
+var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) {
+  try {
     tg.ready();
     tg.expand();
-  }
-}catch(e){}
+  } catch (e) {}
+}
 
-var lastTouchTime = 0;
-function normalizeEvent(e){
-  if(!e) return true;
-  if(e.type === 'touchend'){
-    lastTouchTime = Date.now();
-  } else if(e.type === 'click'){
-    if(Date.now() - lastTouchTime < 450){
-      e.preventDefault();
-      return false;
-    }
+var boardEl = document.getElementById('board');
+var cells = Array.prototype.slice.call(boardEl.children);
+var statusEl = document.getElementById('status');
+var statusTxt = document.getElementById('statusTxt');
+var trapValEl = document.getElementById('trapVal');
+var switchBtn = document.getElementById('switchBtn');
+var adminBadge = document.getElementById('adminBadge');
+var playBtn = document.getElementById('playBtn');
+var backBtn = document.getElementById('backBtn');
+var tMinus = document.getElementById('tMinus');
+var tPlus = document.getElementById('tPlus');
+var logoEl = document.getElementById('logo');
+
+var traps = 1;
+var multi = false;
+var busy = false;
+var FORCE = new URLSearchParams(location.search).get('admin') === '1';
+if (FORCE) adminBadge.hidden = false;
+
+var AC = null;
+function getAudioContext() {
+  if (!AC) {
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) AC = new AudioCtx();
   }
-  e.preventDefault();
-  return true;
+  if (AC && AC.state === 'suspended') {
+    AC.resume();
+  }
+  return AC;
+}
+
+function tone(freq, dur, type, gain, delay) {
+  try {
+    var ctx = getAudioContext();
+    if (!ctx) return;
+    var t = ctx.currentTime + (delay || 0);
+    var osc = ctx.createOscillator();
+    var gn = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    gn.gain.setValueAtTime(gain || 0.15, t);
+    gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gn);
+    gn.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  } catch (e) {}
+}
+
+function hapticLight() {
+  if (tg && tg.HapticFeedback) {
+    try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+  }
+}
+function hapticSuccess() {
+  if (tg && tg.HapticFeedback) {
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  }
 }
 
 var STAR_SVG =
@@ -385,30 +408,8 @@ var STAR_SVG =
   '    <stop offset="100%" stop-color="#ffa726" stop-opacity="0"/>' +
   '  </radialGradient>' +
   '</defs>' +
-  '<path d="M 50 8 ' +
-  '         C 53 8, 57 24, 63 29 ' +
-  '         C 69 34, 88 33, 90 38 ' +
-  '         C 92 43, 76 54, 74 61 ' +
-  '         C 72 68, 80 87, 76 90 ' +
-  '         C 72 93, 56 80, 50 80 ' +
-  '         C 44 80, 28 93, 24 90 ' +
-  '         C 20 87, 28 68, 26 61 ' +
-  '         C 24 54, 8 43, 10 38 ' +
-  '         C 12 33, 31 34, 37 29 ' +
-  '         C 43 24, 47 8, 50 8 Z" ' +
-  '      fill="url(#caveStarMain)" stroke="#b23c00" stroke-width="1.2" stroke-linejoin="round"/>' +
-  '<path d="M 50 8 ' +
-  '         C 53 8, 57 24, 63 29 ' +
-  '         C 69 34, 88 33, 90 38 ' +
-  '         C 92 43, 76 54, 74 61 ' +
-  '         C 72 68, 80 87, 76 90 ' +
-  '         C 72 93, 56 80, 50 80 ' +
-  '         C 44 80, 28 93, 24 90 ' +
-  '         C 20 87, 28 68, 26 61 ' +
-  '         C 24 54, 8 43, 10 38 ' +
-  '         C 12 33, 31 34, 37 29 ' +
-  '         C 43 24, 47 8, 50 8 Z" ' +
-  '      fill="url(#caveStarHighlight)"/>' +
+  '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#caveStarMain)" stroke="#b23c00" stroke-width="1.2" stroke-linejoin="round"/>' +
+  '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#caveStarHighlight)"/>' +
   '</svg>';
 
 var CROSS_SVG =
@@ -425,249 +426,212 @@ var CROSS_SVG =
   '  <rect x="41" y="10" width="18" height="80" rx="9" fill="url(#iceBar)"/>' +
   '  <rect x="10" y="41" width="80" height="18" rx="9" fill="url(#iceBar)"/>' +
   '  <rect x="46" y="14" width="8" height="72" rx="4" fill="#ffffff" opacity="0.55"/>' +
-  '  </g>' +
+  '</g>' +
   '</svg>';
 
-var AC = null;
-function tone(freq,dur,type,gain,delay){
-  try{
-    AC = AC  new (window.AudioContextwindow.webkitAudioContext)();
-    var ctx = AC;
-    var t = ctx.currentTime + (delay||0);
-    var osc = ctx.createOscillator();
-    var gn = ctx.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.setValueAtTime(freq,t);
-    gn.gain.setValueAtTime(gain||0.15,t);
-    gn.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    osc.connect(gn);
-    gn.connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t+dur+0.02);
-  }catch(e){}
-}
-function hapticLight(){
-  if(tg && tg.HapticFeedback){
-    try{tg.HapticFeedback.impactOccurred('light');}catch(e){}
-  }
-}
-function hapticSuccess(){
-  if(tg && tg.HapticFeedback){
-    try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+function setStatus(mode) {
+  if (mode === 'an') {
+    statusEl.className = 'status an';
+    statusTxt.textContent = 'ANALISANDO IA...';
+  } else if (mode === 'ok') {
+    statusEl.className = 'status ok';
+    statusTxt.textContent = 'SINAL PRONTO ✅';
+  } else {
+    statusEl.className = 'status idle';
+    statusTxt.textContent = 'AGUARDANDO COMANDO...';
   }
 }
 
-var statusEl = document.getElementById('status');
-var statusTxt = document.getElementById('statusTxt');
-function setStatus(mode){
-  if(mode==='an'){
-    statusEl.className='status an';
-    statusTxt.textContent='ANALISANDO IA...';
-  }else if(mode==='ok'){
-    statusEl.className='status ok';
-    statusTxt.textContent='SINAL PRONTO ✅';
-  }else{
-    statusEl.className='status idle';
-    statusTxt.textContent='AGUARDANDO COMANDO...';
-  }
-}
-
-var boardEl = document.getElementById('board');
-var cells = Array.prototype.slice.call(boardEl.children);
-var trapValEl = document.getElementById('trapVal');
-var adminBadge = document.getElementById('adminBadge');
-var switchBtn = document.getElementById('switchBtn');
-var traps = 1;
-var multi = false;
-var busy = false;
-var AC_LOCKED = false;
-
-var FORCE = new URLSearchParams(location.search).get('admin') === '1';
-if(FORCE) adminBadge.hidden = false;
-
-document.body.addEventListener('touchstart', function unlockAudio(){AC_LOCKED=true;}, {passive:true});
-
-function clearBoard(){
-  cells.forEach(function(c){
-    c.className='cell';
-    c.innerHTML='';
+function clearBoard() {
+  cells.forEach(function (c) {
+    c.className = 'cell';
+    c.innerHTML = '';
   });
 }
 
-function shuffle(arr){
-  for(var i=arr.length-1;i>0;i--){
-    var j=Math.floor(Math.random()*(i+1));
-    var t=arr[i];arr[i]=arr[j];arr[j]=t;
+function shuffle(arr) {
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
   }
   return arr;
 }
 
-function onSwitchMode(e){
-  if(!normalizeEvent(e)) return;
-  if(busy) return;
-  multi = !multi;
-  switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
-  tone(multi?880:520,0.08,'triangle',0.18);
-  hapticLight();
+function bindAction(el, fn) {
+  if (!el) return;
+  el.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    fn();
+  });
 }
 
-function onTrapsMinus(e){
-  if(!normalizeEvent(e)) return;
-  if(busy) return;
-  traps = Math.max(1,traps-1);
-  trapValEl.textContent = traps;
-  tone(420,0.06,'sine',0.1);
+bindAction(switchBtn, function () {
+  if (busy) return;
+  multi = !multi;
+  switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
+  tone(multi ? 880 : 520, 0.08, 'triangle', 0.18);
   hapticLight();
-}
-function onTrapsPlus(e){
-  if(!normalizeEvent(e)) return;
-  if(busy) return;
-  traps = Math.min(24,traps+1);
+});
+
+bindAction(tMinus, function () {
+  if (busy) return;
+  traps = Math.max(1, traps - 1);
   trapValEl.textContent = traps;
-  tone(640,0.06,'sine',0.1);
+  tone(420, 0.06, 'sine', 0.1);
   hapticLight();
-}
+});
+
+bindAction(tPlus, function () {
+  if (busy) return;
+  traps = Math.min(24, traps + 1);
+  trapValEl.textContent = traps;
+  tone(640, 0.06, 'sine', 0.1);
+  hapticLight();
+});
 
 var logoTapCount = 0;
 var logoTapTimer = null;
-function onLogo(e){
-  if(!normalizeEvent(e)) return;
+bindAction(logoEl, function () {
   logoTapCount++;
-  if(logoTapTimer) clearTimeout(logoTapTimer);
-  logoTapTimer = setTimeout(function(){logoTapCount=0;},800);
-  if(logoTapCount>=5){
-    logoTapCount=0;
+  if (logoTapTimer) clearTimeout(logoTapTimer);
+  logoTapTimer = setTimeout(function () { logoTapCount = 0; }, 800);
+  if (logoTapCount >= 5) {
+    logoTapCount = 0;
     FORCE = !FORCE;
     adminBadge.hidden = !FORCE;
-    tone(880,0.08,'square',0.18);
-    tone(1200,0.08,'square',0.18,0.08);
+    tone(880, 0.08, 'square', 0.18);
+    tone(1200, 0.08, 'square', 0.18, 0.08);
     hapticLight();
   }
-}
+});
 
-function scanBoard(callback){
-  var count=0;
+function scanBoard(callback) {
   setStatus('an');
-  var scanTimer = setInterval(function(){
-    var idx = Math.floor(Math.random()*cells.length);
+  var count = 0;
+  var scanTimer = setInterval(function () {
+    var idx = Math.floor(Math.random() * cells.length);
     var c = cells[idx];
     c.classList.add('scan');
-    setTimeout(function(){c.classList.remove('scan');},140);
-    tone(1400,0.03,'square',0.12);
+    setTimeout(function () { c.classList.remove('scan'); }, 140);
+    tone(1400, 0.03, 'square', 0.12);
     count++;
-  },80);
-  setTimeout(function(){
+  }, 80);
+  setTimeout(function () {
     clearInterval(scanTimer);
     callback();
-  },1600);
+  }, 1600);
 }
-function revealSingle(trapSet,safeSet){
-  var PICKS_MIN = 3, PICKS_MAX = 7;
-  var n = PICKS_MIN + Math.floor(Math.random()*(PICKS_MAX-PICKS_MIN+1));
-  var corners = [0,4,20,24];
+
+function revealSingle(trapSet, safeSet) {
+  var PICKS_MIN = 3, PICKS_MAX = 5;
+  var n = PICKS_MIN + Math.floor(Math.random() * (PICKS_MAX - PICKS_MIN + 1));
+  var corners = [0, 4, 20, 24];
   var starIdx;
-  if(FORCE){
+  if (FORCE) {
     starIdx = corners.slice();
-  }else{
-    starIdx = shuffle(safeSet.slice()).slice(0,n);
+    if (starIdx.length > n) starIdx = starIdx.slice(0, n);
+  } else {
+    starIdx = shuffle(safeSet.slice()).slice(0, n);
   }
   var seq = starIdx.slice();
   var step = 0;
-  (function next(){
-    if(step>=seq.length){
-      tone(660,0.12,'triangle',0.18,0);
-      tone(880,0.12,'triangle',0.18,0.08);
-      tone(1180,0.16,'sine',0.18,0.16);
+  function next() {
+    if (step >= seq.length) {
+      tone(660, 0.12, 'triangle', 0.18, 0);
+      tone(880, 0.12, 'triangle', 0.18, 0.08);
+      tone(1180, 0.16, 'sine', 0.18, 0.16);
       hapticSuccess();
       setStatus('ok');
-      busy=false;
+      busy = false;
       return;
     }
     var idx = seq[step++];
     var c = cells[idx];
     c.classList.add('open');
+    if (FORCE) c.classList.add('admin-hint');
     c.innerHTML = STAR_SVG;
-    tone(760+step*65,0.10,'triangle',0.18);
+    tone(760 + step * 65, 0.10, 'triangle', 0.18);
     hapticLight();
-    setTimeout(next,170);
-  })();
+    setTimeout(next, 170);
+  }
+  next();
 }
 
-function revealMulti(trapSet,safeSet){
+function revealMulti(trapSet, safeSet) {
   var order = [];
-  safeSet.forEach(function(i){ order.push({i:i,t:'star'}); });
-  trapSet.forEach(function(i){ order.push({i:i,t:'trap'}); });
+  safeSet.forEach(function (i) { order.push({ i: i, t: 'star' }); });
+  trapSet.forEach(function (i) { order.push({ i: i, t: 'trap' }); });
   shuffle(order);
-  var step=0;
-  var delay=30;
-  (function next(){
-    if(step>=order.length){
-      tone(660,0.12,'triangle',0.18,0);
-      tone(880,0.12,'triangle',0.18,0.08);
-      tone(1180,0.16,'sine',0.18,0.16);
+  var step = 0;
+  var delay = 30;
+  function next() {
+    if (step >= order.length) {
+      tone(660, 0.12, 'triangle', 0.18, 0);
+      tone(880, 0.12, 'triangle', 0.18, 0.08);
+      tone(1180, 0.16, 'sine', 0.18, 0.16);
       hapticSuccess();
       setStatus('ok');
-      busy=false;
+      busy = false;
       return;
     }
     var item = order[step++];
     var c = cells[item.i];
     c.classList.add('open');
-    if(item.t==='trap'){
+    if (item.t === 'trap') {
       c.classList.add('boom');
       c.innerHTML = CROSS_SVG;
-      tone(210,0.14,'sawtooth',0.2);
-      tone(110,0.20,'square',0.25,0.05);
-    }else{
+      tone(220, 0.14, 'sawtooth', 0.2);
+      tone(110, 0.20, 'square', 0.25, 0.05);
+    } else {
+      if (FORCE && [0, 4, 20, 24].indexOf(item.i) >= 0) c.classList.add('admin-hint');
       c.innerHTML = STAR_SVG;
-      tone(820+step*40,0.08,'triangle',0.16);
+      tone(820 + step * 40, 0.08, 'triangle', 0.16);
     }
     hapticLight();
-    setTimeout(next,delay);
-  })();
+    setTimeout(next, delay);
+  }
+  next();
 }
 
-function onPlay(e){
-  if(!normalizeEvent(e)) return;
-  if(busy) return;
+bindAction(playBtn, function () {
+  if (busy) return;
   busy = true;
   clearBoard();
   hapticLight();
-  tone(260,0.12,'sawtooth',0.18);
-  tone(320,0.10,'sawtooth',0.18,0.08);
-  scanBoard(function(){
-    var corners = [0,4,20,24];
+  tone(260, 0.12, 'sawtooth', 0.18);
+  tone(320, 0.10, 'sawtooth', 0.18, 0.08);
+  scanBoard(function () {
+    var corners = [0, 4, 20, 24];
     var pool = [];
-    for(var i=0;i<cells.length;i++){
-      if(!(FORCE && corners.indexOf(i)>=0)){
+    for (var i = 0; i < cells.length; i++) {
+      if (!(FORCE && corners.indexOf(i) >= 0)) {
         pool.push(i);
       }
     }
     shuffle(pool);
-    var trapSet = pool.slice(0,Math.min(traps,pool.length));
+    var trapSet = pool.slice(0, Math.min(traps, pool.length));
     var safeSet = [];
-    for(var j=0;j<cells.length;j++){
-      if(trapSet.indexOf(j)===-1) safeSet.push(j);
+    for (var j = 0; j < cells.length; j++) {
+      if (trapSet.indexOf(j) === -1) safeSet.push(j);
     }
-    if(multi){
-      revealMulti(trapSet,safeSet);
-    }else{
-      revealSingle(trapSet,safeSet);
+    if (multi) {
+      revealMulti(trapSet, safeSet);
+    } else {
+      revealSingle(trapSet, safeSet);
     }
   });
-}
+});
 
-function onBack(e){
-  if(!normalizeEvent(e)) return;
-  if(busy) return;
+bindAction(backBtn, function () {
+  if (busy) return;
   clearBoard();
   setStatus('idle');
-  tone(420,0.10,'triangle',0.18);
+  tone(420, 0.10, 'triangle', 0.18);
   hapticLight();
-  if(tg){
-    try{tg.close();}catch(err){}
+  if (tg) {
+    try { tg.close(); } catch (e) {}
   }
-}
+});
 
 setStatus('idle');
 </script>
