@@ -1,19 +1,14 @@
 <!DOCTYPE html>
-<!-- [code_file:3] -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Mines | CaveMines 1WIN</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { height: 100%; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
   body {
-    margin: 0;
-    padding: 10px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -23,14 +18,13 @@
     color: #eaf3ff;
     font-family: 'Rajdhani', sans-serif;
     overflow: hidden;
-    -webkit-font-smoothing: antialiased;
     user-select: none;
-    position: relative;
+    padding: 12px;
   }
 
   #app {
     width: 100%;
-    max-width: 360px;
+    max-width: 340px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -45,8 +39,6 @@
   .logo-wrap {
     display: flex;
     align-items: baseline;
-    gap: 2px;
-    line-height: 1;
     cursor: pointer;
   }
 
@@ -54,17 +46,15 @@
     font-family: 'Montserrat', sans-serif;
     font-weight: 900;
     font-style: italic;
-    font-size: 22px;
+    font-size: 24px;
     color: #ffffff;
-    letter-spacing: -1px;
   }
 
   .logo-win {
     font-family: 'Montserrat', sans-serif;
     font-weight: 900;
     font-style: italic;
-    font-size: 22px;
-    letter-spacing: -1px;
+    font-size: 24px;
     background: linear-gradient(180deg, #7de8f5 0%, #38bdf8 55%, #0e7fb0 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -75,131 +65,87 @@
     background: #0077ff;
     border-radius: 8px;
     color: #eaf3ff;
-    font-size: 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
     font-weight: 700;
     padding: 6px 14px;
     border: none;
     cursor: pointer;
-    box-shadow: 0 3px 8px rgba(0,119,255,0.35);
-    transition: transform 0.12s ease;
-    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,119,255,0.4);
   }
-
-  .switch-btn:active {
-    transform: scale(0.97);
-  }
+  .switch-btn:active { transform: scale(0.96); }
 
   .status-bar {
     width: 100%;
     text-align: center;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.6px;
-    color: #6fb8e8;
+    letter-spacing: 0.8px;
+    color: #5da8d8;
     padding: 5px 8px;
     border-radius: 8px;
-    background: rgba(12,23,40,0.9);
-    border: 1px solid rgba(72,202,228,0.25);
-    min-height: 14px;
-    transition: all 0.3s ease;
-  }
-
-  .status-bar.analyzing {
-    color: #ffcf4f;
-    border-color: rgba(255,207,79,0.35);
-    animation: pulseStatus 0.9s infinite;
-  }
-
-  .status-bar.ready {
-    color: #2ee879;
-    border-color: rgba(46,232,121,0.4);
-  }
-
-  @keyframes pulseStatus {
-    0%,100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    background: rgba(10, 20, 35, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    min-height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .board-wrap {
     background: #091322;
     border-radius: 18px;
-    padding: 10px;
-    box-sizing: border-box;
+    padding: 8px;
     border: 1.5px solid #142844;
     border-bottom: 2px solid #00c3ff;
-    box-shadow: 0 10px 25px -5px rgba(0,195,255,0.4), 0 6px 18px rgba(0,0,0,0.6);
+    box-shadow: 0 10px 25px -5px rgba(0,195,255,0.35), 0 6px 18px rgba(0,0,0,0.6);
   }
 
   .board {
     width: 100%;
-    max-width: 320px;
     aspect-ratio: 1 / 1;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
     gap: 6px;
   }
 
   .cell {
     width: 100%;
     height: 100%;
-    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     border-radius: 10px;
     background: linear-gradient(180deg, #208092 0%, #125563 60%, #0c3d47 100%);
     border-top: 1px solid #48cae4;
     box-shadow: inset 0 -3px 4px rgba(0,0,0,0.5), 0 3px 5px rgba(0,0,0,0.4);
     cursor: pointer;
     overflow: hidden;
-    transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.12s ease;
   }
 
-  .cell:active {
-    transform: scale(0.94);
-  }
-
-  .cell.flash {
-    animation: flashCell 0.22s ease;
-  }
-  @keyframes flashCell {
-    0% { box-shadow: inset 0 -3px 4px rgba(0,0,0,0.5), 0 3px 5px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 0 26px 8px rgba(255,255,255,0.9), inset 0 0 16px rgba(255,255,255,0.7); }
-    100% { box-shadow: inset 0 -3px 4px rgba(0,0,0,0.6); }
-  }
-
-  .cell.star,
-  .cell.trap {
+  .cell.open {
     background: transparent;
     border: none;
     box-shadow: none;
   }
 
-  .cell.star svg,
-  .cell.trap svg {
-    width: 85%;
-    height: 85%;
+  .cell.open svg {
+    width: 88%;
+    height: 88%;
     display: block;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-    animation: starPop 0.42s cubic-bezier(.2,1.5,.4,1) both;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
-  @keyframes starPop {
-    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-    55% { transform: scale(1.18) rotate(6deg); opacity: 1; }
-    75% { transform: scale(0.95) rotate(-2deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-
-  .cell.admin-hint {
-    box-shadow: 0 0 0 2px rgba(255,90,120,0.9);
+  @keyframes popIn {
+    0% { transform: scale(0.2); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
   }
 
   .control-card {
     background: #0c1628;
     border-radius: 16px;
-    padding: 14px 16px;
+    padding: 12px 16px;
     border: 1px solid #162a47;
     display: flex;
     flex-direction: column;
@@ -211,39 +157,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 16px;
   }
 
   .trap-btn {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+[26.08.2026 16:42] кидди: height: 28px;
     border-radius: 8px;
     border: none;
     background: #101f33;
     color: #90a4c0;
-    font-size: 15px;
-    line-height: 1;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
   }
-
-  .trap-btn:active {
-    transform: scale(0.9);
-  }
-
-  .trap-btn svg {
-    width: 9px;
-    height: 14px;
-    display: block;
-  }
+  .trap-btn:active { transform: scale(0.92); background: #162a47; }
 
   .trap-value {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
     min-width: 50px;
   }
 
@@ -257,8 +193,8 @@
 
   .trap-label {
     font-size: 10px;
-    color: #7084a3;
-    line-height: 1;
+    color: #64748b;
+    text-transform: lowercase;
   }
 
   .main-btn {
@@ -267,22 +203,15 @@
     background: linear-gradient(180deg, #0077ff 0%, #0055d4 100%);
     border-radius: 10px;
     color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
     font-size: 15px;
     font-weight: 800;
     border: none;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(0,119,255,0.4);
-    letter-spacing: 0.5px;
   }
-
-  .main-btn:active {
-    transform: scale(0.97);
-  }
-
-  .main-btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
+  .main-btn:active { transform: scale(0.97); }
+  .main-btn:disabled { opacity: 0.5; cursor: default; }
 
   .back-btn {
     width: 90px;
@@ -290,37 +219,26 @@
     background: #962d18;
     border-radius: 8px;
     color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
     font-size: 13px;
     font-weight: 700;
     border: none;
     cursor: pointer;
   }
-
-  .back-btn:active {
-    transform: scale(0.97);
-  }
+  .back-btn:active { transform: scale(0.97); }
 
   #adminBadge {
     display: none;
     position: fixed;
     top: 6px;
     left: 8px;
-    font-family: 'Montserrat', sans-serif;
     font-size: 9px;
-    letter-spacing: 0.8px;
     font-weight: 700;
     color: #ff5678;
     border: 1px solid rgba(255,86,120,0.5);
-    border-radius: 7px;
+    border-radius: 6px;
     padding: 2px 6px;
-    background: rgba(255,86,120,0.08);
-    z-index: 50;
-  }
-
-  @media (max-height: 640px) {
-    body { padding: 6px; }
-    .board { max-width: 280px; }
-    .cell { min-height: 40px; }
+    background: rgba(255,86,120,0.1);
   }
 </style>
 </head>
@@ -338,47 +256,17 @@
   <div id="status" class="status-bar">AGUARDANDO COMANDO...</div>
 
   <div class="board-wrap">
-    <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
-      <div class="cell" data-index="9"></div>
-      <div class="cell" data-index="10"></div>
-      <div class="cell" data-index="11"></div>
-      <div class="cell" data-index="12"></div>
-      <div class="cell" data-index="13"></div>
-      <div class="cell" data-index="14"></div>
-      <div class="cell" data-index="15"></div>
-      <div class="cell" data-index="16"></div>
-      <div class="cell" data-index="17"></div>
-      <div class="cell" data-index="18"></div>
-      <div class="cell" data-index="19"></div>
-      <div class="cell" data-index="20"></div>
-      <div class="cell" data-index="21"></div>
-      <div class="cell" data-index="22"></div>
-      <div class="cell" data-index="23"></div>
-      <div class="cell" data-index="24"></div>
-    </div>
+    <div class="board" id="board"></div>
   </div>
 
   <div class="control-card">
     <div class="traps-row">
-      <button class="trap-btn" id="trapsMinus" aria-label="menos">
-        <svg viewBox="0 0 8 14"><path d="M7 1 L1 7 L7 13" fill="none" stroke="#90a4c0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
+      <button class="trap-btn" id="trapsMinus">‹</button>
       <div class="trap-value">
         <span class="trap-number" id="trapsValue">1</span>
         <span class="trap-label">traps</span>
       </div>
-      <button class="trap-btn" id="trapsPlus" aria-label="mais">
-        <svg viewBox="0 0 8 14"><path d="M1 1 L7 7 L1 13" fill="none" stroke="#90a4c0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
+      <button class="trap-btn" id="trapsPlus">›</button>
     </div>
     <button class="main-btn" id="signalBtn">Play</button>
     <button class="back-btn" id="backBtn" type="button">Back</button>
@@ -391,45 +279,22 @@
 
   var STAR_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
-    '  <linearGradient id="caveStarMain" x1="0%" y1="0%" x2="0%" y2="100%">' +
-    '    <stop offset="0%" stop-color="#ffcc80"/>' +
-    '    <stop offset="35%" stop-color="#ffa726"/>' +
-    '    <stop offset="75%" stop-color="#fb8c00"/>' +
-    '    <stop offset="100%" stop-color="#e65100"/>' +
+    '  <linearGradient id="cStar" x1="0%" y1="0%" x2="0%" y2="100%">' +
+    '    <stop offset="0%" stop-color="#ffd599"/>' +
+    '    <stop offset="35%" stop-color="#ffa333"/>' +
+    '    <stop offset="75%" stop-color="#f57c00"/>' +
+    '    <stop offset="100%" stop-color="#d84315"/>' +
     '  </linearGradient>' +
-    '  <radialGradient id="caveStarHighlight" cx="50%" cy="38%" r="45%">' +
-    '    <stop offset="0%" stop-color="#fff8e1" stop-opacity="0.9"/>' +
-    '    <stop offset="50%" stop-color="#ffe082" stop-opacity="0.4"/>' +
+    '  <radialGradient id="cStarGlow" cx="50%" cy="38%" r="45%">' +
+    '    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>' +
+    '    <stop offset="50%" stop-color="#ffe082" stop-opacity="0.35"/>' +
     '    <stop offset="100%" stop-color="#ffa726" stop-opacity="0"/>' +
     '  </radialGradient>' +
     '</defs>' +
-    '<path d="M 50 8 ' +
-    '         C 53 8, 57 24, 63 29 ' +
-    '         C 69 34, 88 33, 90 38 ' +
-    '         C 92 43, 76 54, 74 61 ' +
-    '         C 72 68, 80 87, 76 90 ' +
-    '         C 72 93, 56 80, 50 80 ' +
-    '         C 44 80, 28 93, 24 90 ' +
-    '         C 20 87, 28 68, 26 61 ' +
-    '         C 24 54, 8 43, 10 38 ' +
-    '         C 12 33, 31 34, 37 29 ' +
-    '         C 43 24, 47 8, 50 8 Z" ' +
-    '      fill="url(#caveStarMain)" stroke="#b23c00" stroke-width="1.2" stroke-linejoin="round"/>' +
-    '<path d="M 50 8 ' +
-    '         C 53 8, 57 24, 63 29 ' +
-    '         C 69 34, 88 33, 90 38 ' +
-    '         C 92 43, 76 54, 74 61 ' +
-    '         C 72 68, 80 87, 76 90 ' +
-    '         C 72 93, 56 80, 50 80 ' +
-    '         C 44 80, 28 93, 24 90 ' +
-    '         C 20 87, 28 68, 26 61 ' +
-    '         C 24 54, 8 43, 10 38 ' +
-    '         C 12 33, 31 34, 37 29 ' +
-    '         C 43 24, 47 8, 50 8 Z" ' +
-    '      fill="url(#caveStarHighlight)"/>' +
+    '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#cStar)" stroke="#a33200" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#cStarGlow)"/>' +
     '</svg>';
-
-  var CROSS_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
+[26.08.2026 16:42] кидди: var CROSS_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
     '  <linearGradient id="iceBar" x1="0%" y1="0%" x2="100%" y2="100%">' +
     '    <stop offset="0%" stop-color="#ffffff"/>' +
@@ -445,258 +310,166 @@
     '</g>' +
     '</svg>';
 
-  function init() {
-    var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-    if (tg) {
-      try {
-        tg.ready();
-        tg.expand();
-        if (tg.setHeaderColor) tg.setHeaderColor('#050b14');
-        if (tg.setBackgroundColor) tg.setBackgroundColor('#050b14');
-      } catch (e) {}
+  var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  if (tg) {
+    try {
+      tg.ready();
+      tg.expand();
+      if (tg.setHeaderColor) tg.setHeaderColor('#050b14');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#050b14');
+    } catch (e) {}
+  }
+
+  var boardEl = document.getElementById('board');
+  var cells = [];
+  for (var i = 0; i < 25; i++) {
+    var c = document.createElement('div');
+    c.className = 'cell';
+    boardEl.appendChild(c);
+    cells.push(c);
+  }
+
+  var actx = null;
+  function getCtx() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
     }
+    return actx;
+  }
 
-    var urlParams = new URLSearchParams(window.location.search);
-    var adminMode = urlParams.get('admin') === '1';
-    var adminBadge = document.getElementById('adminBadge');
-    var logo = document.getElementById('logo');
-    var switchBtn = document.getElementById('switchBtn');
-    var trapsValueEl = document.getElementById('trapsValue');
-    var signalBtn = document.getElementById('signalBtn');
-    var backBtn = document.getElementById('backBtn');
-    var statusEl = document.getElementById('status');
-    var boardEl = document.getElementById('board');
-    var cells = Array.prototype.slice.call(boardEl.querySelectorAll('.cell'));
+  function beep(freq, dur, type, delay) {
+    var ctx = getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    delay = delay || 0;
+    var t0 = ctx.currentTime + delay;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
 
-    var GRID_SIZE = 25;
-    var CORNER_INDEXES = [0, 4, 20, 24];
-    var trapsCount = 1;
-    var mode = 'single';
-    var isBusy = false;
+  var urlParams = new URLSearchParams(window.location.search);
+  var adminMode = urlParams.get('admin') === '1';
+  var adminBadge = document.getElementById('adminBadge');
+  var trapsCount = 1;
+  var mode = 'single';
+  var isBusy = false;
 
-    function setAdminMode(val) {
-      adminMode = val;
+  var switchBtn = document.getElementById('switchBtn');
+  var trapsValueEl = document.getElementById('trapsValue');
+  var signalBtn = document.getElementById('signalBtn');
+  var backBtn = document.getElementById('backBtn');
+  var statusEl = document.getElementById('status');
+  var logo = document.getElementById('logo');
+
+  if (adminMode) adminBadge.style.display = 'block';
+
+  var logoTaps = 0, logoTapTimer = null;
+  logo.addEventListener('click', function () {
+    logoTaps++;
+    clearTimeout(logoTapTimer);
+    logoTapTimer = setTimeout(function () { logoTaps = 0; }, 1500);
+    if (logoTaps >= 5) {
+      adminMode = !adminMode;
       adminBadge.style.display = adminMode ? 'block' : 'none';
+      beep(880, 0.08, 'square');
     }
-    setAdminMode(adminMode);
+  });
 
-    var logoTaps = 0;
-    var logoTapTimer = null;
-
-    logo.addEventListener('click', function () {
-      logoTaps++;
-      clearTimeout(logoTapTimer);
-      logoTapTimer = setTimeout(function () { logoTaps = 0; }, 1500);
-      if (logoTaps >= 5) {
-        logoTaps = 0;
-        setAdminMode(!adminMode);
-        beep(880, 0.08, 'square');
-        setTimeout(function () { beep(1200, 0.08, 'square'); }, 90);
-      }
-    });
-
-    var AudioCtx = window.AudioContext || window.webkitAudioContext;
-    var actx = null;
-
-    function getCtx() {
-      if (!actx) {
-        try { actx = new AudioCtx(); } catch (e) { actx = null; }
-      }
-      return actx;
+  function resetBoard() {
+    for (var j = 0; j < cells.length; j++) {
+      cells[j].className = 'cell';
+      cells[j].innerHTML = '';
     }
+  }
 
-    function beep(freq, dur, type, delay) {
-      var ctx = getCtx();
-      if (!ctx) return;
-      delay = delay || 0;
-      var t0 = ctx.currentTime + delay;
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.type = type || 'sine';
-      osc.frequency.setValueAtTime(freq, t0);
-      gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.exponentialRampToValueAtTime(0.18, t0 + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.02);
+  function pickRandom(count, pool) {
+    var copy = pool.slice(), res = [];
+    while (res.length < count && copy.length > 0) {
+      var idx = Math.floor(Math.random() * copy.length);
+      res.push(copy.splice(idx, 1)[0]);
     }
+    return res;
+  }
 
-    function clickSound() {
-      beep(640, 0.045, 'sine');
-      beep(980, 0.03, 'sine', 0.01);
-    }
+  switchBtn.addEventListener('click', function () {
+    mode = (mode === 'single') ? 'multiple' : 'single';
+    switchBtn.textContent = (mode === 'single') ? 'Switch to multiple' : 'Switch to single';
+    beep(600, 0.04);
+  });
 
-    function starSound(i) {
-      var base = 760 + i * 55;
-      beep(base, 0.09, 'triangle');
-      beep(base * 1.4, 0.07, 'sine', 0.03);
-    }
+  document.getElementById('trapsPlus').addEventListener('click', function () {
+    if (trapsCount < 7) trapsCount++;
+    trapsValueEl.textContent = trapsCount;
+    beep(500, 0.04);
+  });
+[26.08.2026 16:42] кидди: document.getElementById('trapsMinus').addEventListener('click', function () {
+    if (trapsCount > 1) trapsCount--;
+    trapsValueEl.textContent = trapsCount;
+    beep(420, 0.04);
+  });
 
-    function trapSound() {
-      beep(140, 0.22, 'sawtooth');
-      beep(90, 0.28, 'square', 0.05);
-    }
+  signalBtn.addEventListener('click', function () {
+    if (isBusy) return;
+    isBusy = true;
+    signalBtn.disabled = true;
+    resetBoard();
+    statusEl.textContent = 'ANALISANDO IA...';
+    beep(280, 0.1, 'sawtooth');
 
-    function analyzeSound() {
-      beep(200, 0.12, 'sawtooth');
-      beep(260, 0.10, 'sawtooth', 0.1);
-    }
+    setTimeout(function () {
+      var allIdx = [];
+      for (var i = 0; i < 25; i++) allIdx.push(i);
 
-    function successSound() {
-      beep(660, 0.08, 'triangle');
-      beep(880, 0.10, 'triangle', 0.09);
-      beep(1180, 0.14, 'sine', 0.18);
-    }
-    document.body.addEventListener('touchstart', function unlock() {
-      var ctx = getCtx();
-      if (ctx && ctx.state === 'suspended') ctx.resume();
-      document.body.removeEventListener('touchstart', unlock);
-    }, { once: true });
-
-    document.body.addEventListener('click', function unlock() {
-      var ctx = getCtx();
-      if (ctx && ctx.state === 'suspended') ctx.resume();
-      document.body.removeEventListener('click', unlock);
-    }, { once: true });
-
-    function setStatus(text, cls) {
-      statusEl.textContent = text;
-      statusEl.className = 'status-bar' + (cls ? ' ' + cls : '');
-    }
-
-    function renderSwitchBtn() {
-      switchBtn.textContent = mode === 'single' ? 'Switch to multiple' : 'Switch to single';
-    }
-
-    function renderTraps() {
-      trapsValueEl.textContent = trapsCount;
-    }
-
-    function resetBoard() {
-      cells.forEach(function (c) {
-        c.className = 'cell';
-        c.innerHTML = '';
-      });
-    }
-
-    function pickRandomIndexes(count, pool) {
-      var arr = pool.slice();
-      var result = [];
-      while (result.length < count && arr.length > 0) {
-        var idx = Math.floor(Math.random() * arr.length);
-        result.push(arr.splice(idx, 1)[0]);
-      }
-      return result;
-    }
-
-    function generateSingleModeIndexes() {
-      var starCount = 3 + Math.floor(Math.random() * 5);
-      if (adminMode) {
-        var guaranteed = CORNER_INDEXES.slice(0, Math.min(starCount, CORNER_INDEXES.length));
-        var remaining = starCount - guaranteed.length;
-        if (remaining > 0) {
-          var pool = [];
-          for (var i = 0; i < GRID_SIZE; i++) {
-            if (guaranteed.indexOf(i) === -1) pool.push(i);
-          }
-          guaranteed = guaranteed.concat(pickRandomIndexes(remaining, pool));
-        }
-        return { stars: guaranteed, traps: [] };
-      }
-      var fullPool = [];
-      for (var j = 0; j < GRID_SIZE; j++) fullPool.push(j);
-      return { stars: pickRandomIndexes(starCount, fullPool), traps: [] };
-    }
-
-    function generateAllModeIndexes() {
-      var allIndexes = [];
-      for (var i = 0; i < GRID_SIZE; i++) allIndexes.push(i);
-
-      var trapPool = allIndexes.slice();
-      if (adminMode) {
-        trapPool = allIndexes.filter(function (i) {
-          return CORNER_INDEXES.indexOf(i) === -1;
+      var items = [];
+      if (mode === 'single') {
+        var count = 3 + Math.floor(Math.random() * 4);
+        var chosen = pickRandom(count, allIdx);
+        items = chosen.map(function (idx) { return { idx: idx, type: 'star' }; });
+      } else {
+        var traps = pickRandom(trapsCount, allIdx);
+        items = allIdx.map(function (idx) {
+          return { idx: idx, type: traps.indexOf(idx) !== -1 ? 'trap' : 'star' };
         });
       }
 
-      var traps = pickRandomIndexes(Math.min(trapsCount, trapPool.length), trapPool);
-      var stars = allIndexes.filter(function (i) {
-        return traps.indexOf(i) === -1;
-      });
-
-      return { stars: stars, traps: traps };
-    }
-
-    function revealBoard(result) {
-      var allIdx = result.stars.map(function (i) {
-        return { idx: i, type: 'star' };
-      }).concat(result.traps.map(function (i) {
-        return { idx: i, type: 'trap' };
-      }));
-
-      allIdx.sort(function () { return Math.random() - 0.5; });
-
-      var delayStep = allIdx.length > 10 ? 45 : 220;
-
-      allIdx.forEach(function (item, order) {
+      var step = mode === 'multiple' ? 35 : 180;
+      items.forEach(function (item, order) {
         setTimeout(function () {
           var c = cells[item.idx];
-          c.classList.add('flash');
-
-          setTimeout(function () {
-            c.classList.remove('flash');
-            if (item.type === 'star') {
-              c.classList.add('star');
-              if (adminMode) c.classList.add('admin-hint');
-              c.innerHTML = STAR_SVG;
-              starSound(order % 8);
-            } else {
-              c.classList.add('trap');
-              c.innerHTML = CROSS_SVG;
-              trapSound();
-            }
-          }, 160);
-
-          if (tg && tg.HapticFeedback) {
-            try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
-          }
-        }, order * delayStep);
+          c.classList.add('open');
+          c.innerHTML = item.type === 'star' ? STAR_SVG : CROSS_SVG;
+          if (item.type === 'star') beep(700 + (order % 6) * 60, 0.06, 'triangle');
+          else beep(120, 0.2, 'sawtooth');
+        }, order * step);
       });
 
-      return allIdx.length * delayStep + 500;
+      setTimeout(function () {
+        statusEl.textContent = 'SINAL PRONTO ✅';
+        isBusy = false;
+        signalBtn.disabled = false;
+      }, items.length * step + 200);
+
+    }, 800);
+  });
+
+  backBtn.addEventListener('click', function () {
+    beep(400, 0.04);
+    if (tg && tg.close) {
+      try { tg.close(); return; } catch(e){}
     }
-
-    cells.forEach(function (c) {
-      c.addEventListener('click', function () {
-        clickSound();
-      });
-    });
-
-    switchBtn.addEventListener('click', function () {
-      mode = mode === 'single' ? 'all' : 'single';
-      clickSound();
-      renderSwitchBtn();
-    });
-    document.getElementById('trapsPlus').addEventListener('click', function () {
-      if (trapsCount < 7) trapsCount++;
-      clickSound();
-      renderTraps();
-    });
-
-    document.getElementById('trapsMinus').addEventListener('click', function () {
-      if (trapsCount > 1) trapsCount--;
-      clickSound();
-      renderTraps();
-    });
-
-    signalBtn.addEventListener('click', function () {
-      if (isBusy) return;
-      isBusy = true;
-      signalBtn.disabled = true;
-
-      resetBoard();
-      setStatus('ANALISANDO IA...', 'analyzing');
-      analyzeSound();
-      clickSound();
+    resetBoard();
+    statusEl.textContent = 'AGUARDANDO COMANDO...';
+  });
+})();
+</script>
+</body>
+</html>
