@@ -123,24 +123,40 @@
       overflow: hidden;
     }
 
+    /* Открытая ячейка Cavemines: оранжевый объём и золотая звезда */
     .cell.star {
-      background: radial-gradient(circle, #ffe066 0%, #f59e0b 80%);
-      border: 1px solid #fbbf24;
-      box-shadow: 0 0 18px rgba(245, 158, 11, 0.85);
-      transform: scale(1.05);
+      background: radial-gradient(circle at 50% 30%, #ff8a00 0%, #e65100 70%, #993300 100%) !important;
+      border: 1.5px solid #ffb74d !important;
+      box-shadow: 0 0 20px rgba(255, 138, 0, 0.85), inset 0 2px 4px rgba(255, 255, 255, 0.4) !important;
+      transform: scale(1.04);
     }
 
-    .cell.star::after {
-      content: "⭐";
-      font-size: 20px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-      animation: pop 0.4s ease;
+    .cell.star::before {
+      content: "";
+      position: absolute;
+      width: 68%;
+      height: 68%;
+      background: radial-gradient(circle at 40% 25%, #ffffff 0%, #fff3b0 30%, #ffd000 65%, #d48800 100%);
+      clip-path: polygon(
+        50% 0%,
+        63% 35%,
+        98% 35%,
+        70% 57%,
+        81% 91%,
+        50% 70%,
+        19% 91%,
+        30% 57%,
+        2% 35%,
+        37% 35%
+      );
+      filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5));
+      animation: star-pop 0.35s ease-out forwards;
     }
 
-    @keyframes pop {
-      0% { transform: scale(0); }
-      70% { transform: scale(1.2); }
-      100% { transform: scale(1); }
+    @keyframes star-pop {
+      0% { transform: scale(0.3); opacity: 0; }
+      70% { transform: scale(1.18); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     /* Селектор мин */
@@ -323,7 +339,6 @@
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
     if (tg) { tg.expand(); }
 
-    // Твой Telegram ID
     const OWNER_TELEGRAM_ID = 1733886157;
 
     let tgUserId = null;
@@ -383,7 +398,7 @@
       if (logoClickTimeout) clearTimeout(logoClickTimeout);
       logoClickTimeout = setTimeout(() => {
         logoClicks = 0;
-      }, 2000); // 2 секунды на 5 кликов
+      }, 2000);
 
       if (logoClicks >= 5) {
         logoClicks = 0;
@@ -418,29 +433,40 @@
       if (mines < 7) { mines++; document.getElementById('minesCount').textContent = mines; }
     });
 
-    // Настройки анимации
-    const FLASH_INTERVAL_MS = 140;       // скорость мерцания при сканировании
-    const FLASH_HIGHLIGHT_MS = 180;      // подсветка клетки
-    const FLASH_COUNT = 15;              // общее количество миганий
-    const STAR_REVEAL_DELAY_MS = 450;    // плавная пауза между появлением звёзд
+    // Настройки плавности анимации
+    const FLASH_INTERVAL_MS = 130;
+    const FLASH_HIGHLIGHT_MS = 170;
+    const FLASH_COUNT = 14;
+    const STAR_REVEAL_DELAY_MS = 450;
+
+    let flashInterval = null;
 
     btnGenerate.addEventListener('click', () => {
       btnGenerate.disabled = true;
       statusText.textContent = 'Analisando algoritmo...';
       statusText.style.color = '#38bdf8';
 
-      gridEl.querySelectorAll('.cell').forEach(c => c.classList.remove('star'));
+      // Полная очистка перед сканированием
+      gridEl.querySelectorAll('.cell').forEach(c => {
+        c.classList.remove('star');
+        c.style.background = '';
+      });
 
       let flashes = 0;
-      const flashInterval = setInterval(() => {
+      if (flashInterval) clearInterval(flashInterval);
+
+      flashInterval = setInterval(() => {
         const randIndex = Math.floor(Math.random() * 25);
         const cell = gridEl.children[randIndex];
-        const originalBg = cell.style.background;
 
-        cell.style.background = '#00d4ff';
-        setTimeout(() => {
-          cell.style.background = originalBg;
-        }, FLASH_HIGHLIGHT_MS);
+        if (!cell.classList.contains('star')) {
+          cell.style.background = '#00d4ff';
+          setTimeout(() => {
+            if (!cell.classList.contains('star')) {
+              cell.style.background = '';
+            }
+          }, FLASH_HIGHLIGHT_MS);
+        }
 
         flashes++;
 
@@ -452,6 +478,12 @@
     });
 
     function revealSignal() {
+      // 100% сброс зависших фонов перед выдачей звёзд
+      gridEl.querySelectorAll('.cell').forEach(c => {
+        c.classList.remove('star');
+        c.style.background = '';
+      });
+
       let targets = [];
 
       if (customStars.length > 0) {
@@ -465,7 +497,9 @@
 
       targets.forEach((idx, i) => {
         setTimeout(() => {
-          gridEl.children[idx].classList.add('star');
+          const cell = gridEl.children[idx];
+          cell.style.background = '';
+          cell.classList.add('star');
         }, i * STAR_REVEAL_DELAY_MS);
       });
 
@@ -473,7 +507,7 @@
         statusText.textContent = 'Sinal Confirmado!';
         statusText.style.color = '#22c55e';
         btnGenerate.disabled = false;
-      }, targets.length * STAR_REVEAL_DELAY_MS + 400);
+      }, targets.length * STAR_REVEAL_DELAY_MS + 350);
     }
   </script>
 </body>
