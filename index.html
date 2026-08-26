@@ -118,15 +118,14 @@
       box-shadow: 0 0 14px rgba(0, 212, 255, 0.85);
     }
 
-    /* Открытая выигрышная ячейка со звездой */
+    /* Открытая выигрышная ячейка — тёмно-синий фон, без оранжевой заливки */
     .cell.star {
       background: radial-gradient(circle at 50% 5%, #243b68 0%, #182843 40%, #101a33 100%);
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow:
         inset 0 0 10px rgba(0, 0, 0, 0.4),
-        0 10px 22px rgba(0, 0, 0, 0.7),
-        0 0 18px rgba(249, 115, 22, 0.75);
+        0 10px 22px rgba(0, 0, 0, 0.7);
     }
 
     .cell-star-svg {
@@ -449,57 +448,93 @@
     const FLASH_COUNT = 15;              // количество "мерцаний"
     const STAR_REVEAL_DELAY_MS = 450;    // пауза между появлением каждой звезды
 
-    // Создание SVG-звезды с идеальными пропорциями и уникальным градиентом
+    /**
+     * Создаёт объёмную 3D-звезду из 10 отдельных граней (по 2 на каждый луч).
+     * Каждая грань имеет свой уникальный градиент, чтобы избежать
+     * конфликтов id при рендере нескольких звёзд одновременно.
+     */
     function createStarSvg(index) {
       const svgNS = "http://www.w3.org/2000/svg";
-      const gradientId = `cellStarGradient_${index}`;
-
       const svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("viewBox", "0 0 100 100");
       svg.setAttribute("class", "cell-star-svg");
 
       const defs = document.createElementNS(svgNS, "defs");
-      const grad = document.createElementNS(svgNS, "linearGradient");
-      grad.setAttribute("id", gradientId);
-      grad.setAttribute("x1", "50%");
-      grad.setAttribute("y1", "0%");
-      grad.setAttribute("x2", "50%");
-      grad.setAttribute("y2", "100%");
-
-      const stop1 = document.createElementNS(svgNS, "stop");
-      stop1.setAttribute("offset", "0%");
-      stop1.setAttribute("stop-color", "#fff3c4");
-
-      const stop2 = document.createElementNS(svgNS, "stop");
-      stop2.setAttribute("offset", "35%");
-      stop2.setAttribute("stop-color", "#ffd567");
-
-      const stop3 = document.createElementNS(svgNS, "stop");
-      stop3.setAttribute("offset", "70%");
-      stop3.setAttribute("stop-color", "#ffa634");
-
-      const stop4 = document.createElementNS(svgNS, "stop");
-      stop4.setAttribute("offset", "100%");
-      stop4.setAttribute("stop-color", "#e8730f");
-
-      grad.appendChild(stop1);
-      grad.appendChild(stop2);
-      grad.appendChild(stop3);
-      grad.appendChild(stop4);
-      defs.appendChild(grad);
       svg.appendChild(defs);
 
-      const star = document.createElementNS(svgNS, "polygon");
-      // Математически правильная пятиконечная звезда, вписанная в 100x100
-      star.setAttribute(
-        "points",
-        "50,3 61,39 98,39 68,61 79,97 50,76 21,97 32,61 2,39 39,39"
-      );
-      star.setAttribute("fill", `url(#${gradientId})`);
-      star.setAttribute("stroke", "#7c3a05");
-      star.setAttribute("stroke-width", "2.5");
-      star.setAttribute("stroke-linejoin", "round");
-      svg.appendChild(star);
+      const cx = 50, cy = 50;
+      const outerR = 46;
+      const innerR = 18;
+      const points = [];
+
+      // Строим 10 вершин звезды: чередование внешних (кончики) и внутренних (впадины)
+      for (let k = 0; k < 5; k++) {
+        const outerAngleDeg = -90 + k * 72;
+        const innerAngleDeg = outerAngleDeg + 36;
+
+        const outerAngleRad = (Math.PI / 180) * outerAngleDeg;
+        const innerAngleRad = (Math.PI / 180) * innerAngleDeg;
+
+        points.push({
+          x: cx + outerR * Math.cos(outerAngleRad),
+          y: cy + outerR * Math.sin(outerAngleRad)
+        });
+        points.push({
+          x: cx + innerR * Math.cos(innerAngleRad),
+          y: cy + innerR * Math.sin(innerAngleRad)
+        });
+      }
+
+      // 10 треугольных граней: (центр, точка i, точка i+1)
+      for (let j = 0; j < points.length; j++) {
+        const p1 = points[j];
+        const p2 = points[(j + 1) % points.length];
+
+        const gradientId = `starGrad_${index}_facet_${j}`;
+        const grad = document.createElementNS(svgNS, "linearGradient");
+        grad.setAttribute("id", gradientId);
+        grad.setAttribute("x1", "0%");
+        grad.setAttribute("y1", "0%");
+        grad.setAttribute("x2", "100%");
+        grad.setAttribute("y2", "100%");
+
+        // Определяем сторону грани: усредняем X двух вершин относительно центра.
+        // Свет падает сверху-слева — левые грани светлые (золото), правые тёмные (бронза).
+        const avgX = (p1.x + p2.x) / 2;
+        const isLightFacet = avgX < cx;
+
+        const stop1 = document.createElementNS(svgNS, "stop");
+        const stop2 = document.createElementNS(svgNS, "stop");
+
+        if (isLightFacet) {
+          stop1.setAttribute("offset", "0%");
+          stop1.setAttribute("stop-color", "#fff1b0");
+          stop2.setAttribute("offset", "100%");
+          stop2.setAttribute("stop-color", "#ffc107");
+        } else {
+          stop1.setAttribute("offset", "0%");
+          stop1.setAttribute("stop-color", "#ff8800");
+          stop2.setAttribute("offset", "100%");
+          stop2.setAttribute("stop-color", "#d95300");
+        }
+
+        grad.appendChild(stop1);
+        grad.appendChild(stop2);
+        defs.appendChild(grad);
+
+        const facet = document.createElementNS(svgNS, "polygon");
+        facet.setAttribute(
+          "points",
+          `${cx},${cy} ${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`
+        );
+        facet.setAttribute("fill", `url(#${gradientId})`);
+        // Тонкое тёмное ребро между гранями для эффекта объёма
+        facet.setAttribute("stroke", "#993d00");
+        facet.setAttribute("stroke-width", "0.8");
+        facet.setAttribute("stroke-linejoin", "round");
+
+        svg.appendChild(facet);
+      }
 
       return svg;
     }
@@ -518,7 +553,7 @@
         c.style.background = '';
       });
 
-      // Анимация поиска — более плавная и выразительная
+      // Анимация поиска — плавная и выразительная
       let flashes = 0;
       const flashInterval = setInterval(() => {
         const randIndex = Math.floor(Math.random() * 25);
