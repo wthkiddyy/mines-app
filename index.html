@@ -36,11 +36,11 @@
       gap: 14px;
     }
 
-    /* Верхняя панель */
+    /* Верхняя панель — только логотип */
     .header {
       width: 100%;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       padding: 0 4px;
     }
@@ -52,17 +52,6 @@
       color: #0080ff;
       text-shadow: 0 0 15px rgba(0, 128, 255, 0.6);
       cursor: pointer;
-    }
-
-    .badge {
-      background: rgba(0, 140, 255, 0.15);
-      border: 1px solid #0080ff;
-      color: #38bdf8;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
     }
 
     .status-bar {
@@ -129,7 +118,7 @@
       box-shadow: 0 0 14px rgba(0, 212, 255, 0.85);
     }
 
-    /* Открытая выигрышная ячейка со звездой — тёмно-синий фон + внутренняя тень + золотая рамка */
+    /* Открытая выигрышная ячейка со звездой */
     .cell.star {
       background: radial-gradient(circle at 50% 5%, #243b68 0%, #182843 40%, #101a33 100%);
       border-radius: 10px;
@@ -144,7 +133,7 @@
       width: 58px;
       height: 58px;
       filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55))
-              drop-shadow(0 0 18px rgba(249, 115, 22, 0.9));
+              drop-shadow(0 0 20px rgba(249, 115, 22, 0.95));
       animation: star-pop 0.45s ease-out;
       pointer-events: none;
     }
@@ -296,7 +285,6 @@
   <div class="container">
     <div class="header">
       <div class="logo" id="appLogo">1WIN</div>
-      <div class="badge">IA BOT v4.2</div>
     </div>
 
     <div class="status-bar">
@@ -461,7 +449,7 @@
     const FLASH_COUNT = 15;              // количество "мерцаний"
     const STAR_REVEAL_DELAY_MS = 450;    // пауза между появлением каждой звезды
 
-    // Создание SVG-звезды с уникальным градиентом для каждой ячейки
+    // Создание SVG-звезды с идеальными пропорциями и уникальным градиентом
     function createStarSvg(index) {
       const svgNS = "http://www.w3.org/2000/svg";
       const gradientId = `cellStarGradient_${index}`;
@@ -473,26 +461,26 @@
       const defs = document.createElementNS(svgNS, "defs");
       const grad = document.createElementNS(svgNS, "linearGradient");
       grad.setAttribute("id", gradientId);
-      grad.setAttribute("x1", "30%");
+      grad.setAttribute("x1", "50%");
       grad.setAttribute("y1", "0%");
-      grad.setAttribute("x2", "70%");
+      grad.setAttribute("x2", "50%");
       grad.setAttribute("y2", "100%");
 
       const stop1 = document.createElementNS(svgNS, "stop");
       stop1.setAttribute("offset", "0%");
-      stop1.setAttribute("stop-color", "#ffe9b3");
+      stop1.setAttribute("stop-color", "#fff3c4");
 
       const stop2 = document.createElementNS(svgNS, "stop");
-      stop2.setAttribute("offset", "40%");
-      stop2.setAttribute("stop-color", "#ffd367");
+      stop2.setAttribute("offset", "35%");
+      stop2.setAttribute("stop-color", "#ffd567");
 
       const stop3 = document.createElementNS(svgNS, "stop");
-      stop3.setAttribute("offset", "75%");
-      stop3.setAttribute("stop-color", "#ffad35");
+      stop3.setAttribute("offset", "70%");
+      stop3.setAttribute("stop-color", "#ffa634");
 
       const stop4 = document.createElementNS(svgNS, "stop");
       stop4.setAttribute("offset", "100%");
-      stop4.setAttribute("stop-color", "#f58a16");
+      stop4.setAttribute("stop-color", "#e8730f");
 
       grad.appendChild(stop1);
       grad.appendChild(stop2);
@@ -502,13 +490,14 @@
       svg.appendChild(defs);
 
       const star = document.createElementNS(svgNS, "polygon");
+      // Математически правильная пятиконечная звезда, вписанная в 100x100
       star.setAttribute(
         "points",
-        "50 8, 63 34, 92 37, 71 56, 78 86, 50 72, 22 86, 29 56, 8 37, 37 34"
+        "50,3 61,39 98,39 68,61 79,97 50,76 21,97 32,61 2,39 39,39"
       );
       star.setAttribute("fill", `url(#${gradientId})`);
-      star.setAttribute("stroke", "#b45309");
-      star.setAttribute("stroke-width", "2");
+      star.setAttribute("stroke", "#7c3a05");
+      star.setAttribute("stroke-width", "2.5");
       star.setAttribute("stroke-linejoin", "round");
       svg.appendChild(star);
 
