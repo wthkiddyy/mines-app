@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#071531">
+<title>Mines</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dff3ff;overflow:auto;
+  background:radial-gradient(1200px 800px at 50% 18%,#0d2b5e 0%,#081c44 45%,#050f2b 100%) fixed;
+}
+.logo{text-align:center;padding:10px 0 0;font-style:italic;font-weight:900;font-size:22px;letter-spacing:2px;
+  color:#fff;text-shadow:0 0 14px rgba(90,190,255,.9)}
+.wrap{width:min(94vw,430px);margin:14px auto 200px;position:relative;z-index:2}
+
+/* ===== СЕТКА 5x5 ===== */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:12px;border-radius:18px;
+  background:rgba(7,25,58,.55);border:2px solid rgba(90,170,255,.55);
+  box-shadow:0 0 18px rgba(40,140,255,.35),inset 0 0 22px rgba(20,90,180,.35)}
+.tile{aspect-ratio:1;border-radius:12px;position:relative;cursor:pointer;
+  background:linear-gradient(180deg,#59d8ff 0%,#2fb9ea 45%,#149fd6 100%);
+  border:1px solid rgba(190,240,255,.5);
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.65),inset 0 -5px 8px rgba(0,70,140,.45),0 3px 10px rgba(0,140,255,.25);
+  transition:transform .12s,filter .12s,box-shadow .12s}
+.tile::after{content:'';position:absolute;inset:0;border-radius:inherit;mix-blend-mode:screen;opacity:.5;
+  background:radial-gradient(60% 45% at 50% 18%,rgba(255,255,255,.5),transparent 60%)}
+.tile.scan{filter:brightness(1.7) saturate(1.2);transform:scale(1.06);
+  box-shadow:0 0 16px rgba(120,220,255,.9),inset 0 0 12px rgba(255,255,255,.6)}
+.tile.open{background:radial-gradient(circle at 50% 40%,#0e3f74 0%,#082547 70%);
+  box-shadow:inset 0 3px 10px rgba(0,0,0,.6),0 0 12px rgba(255,200,60,.25);border-color:rgba(255,210,90,.4)}
+.tile .star{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(22px,7vw,34px);filter:drop-shadow(0 0 8px rgba(255,200,40,.9));
+  animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(0) rotate(-90deg)}100%{transform:scale(1)}}
+
+/* ===== ПАНЕЛИ ===== */
+.panel{margin-top:12px;border-radius:14px;background:rgba(10,30,66,.78);border:1px solid rgba(80,150,255,.25);
+  box-shadow:0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;gap:10px}
+.maxwin{display:flex;align-items:center;gap:8px}
+.starico{font-size:22px;filter:drop-shadow(0 0 6px rgba(255,190,0,.9));cursor:pointer;user-select:none}
+.mw small{display:block;color:#86efac;font-size:11px;font-weight:700}
+.mw b{display:block;color:#fff;font-size:15px}
+.traps{display:flex;align-items:center;gap:8px;background:rgba(4,14,34,.8);
+  border:1px solid rgba(90,160,255,.3);border-radius:10px;padding:5px 10px}
+.traps button{background:none;border:none;color:#cfe9ff;font-size:15px;cursor:pointer;padding:2px 6px}
+.traps .val{text-align:center;line-height:1.1;min-width:74px}
+.traps .val b{display:block;font-size:15px}
+.traps .val small{display:block;font-size:10px;color:#bcd7f5}
+.betbox{flex:1;display:flex;align-items:center;justify-content:space-between;background:rgba(4,14,34,.8);
+  border:1px solid rgba(90,160,255,.3);border-radius:10px;padding:6px 8px}
+.betbox b{font-size:16px}
+.betbox button{width:30px;height:26px;border-radius:7px;border:1px solid rgba(120,190,255,.4);
+  background:rgba(30,70,140,.6);color:#eaf6ff;font-size:16px;cursor:pointer}
+.play{flex:1;max-width:46%;padding:12px 8px;border-radius:10px;border:1px solid #bfeaff;
+  background:linear-gradient(180deg,#3fc6f2,#18a3d8);color:#eafcff;font-weight:700;font-size:16px;
+  box-shadow:0 0 14px rgba(60,190,255,.8),inset 0 1px 0 rgba(255,255,255,.6);cursor:pointer}
+.play:active{transform:scale(.97)}
+[26.08.2026 13:53] кидди: /* ===== ТОСТ / БЕЙДЖ ===== */
+.toast{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(0);z-index:50;
+  background:linear-gradient(180deg,#ffd76a,#ff9d00);color:#3a2400;font-weight:900;font-size:32px;
+  padding:14px 30px;border-radius:16px;box-shadow:0 0 30px rgba(255,190,0,.85);
+  transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+.toast.show{transform:translate(-50%,-50%) scale(1)}
+.badge{position:fixed;top:8px;right:8px;z-index:60;background:rgba(255,180,0,.15);
+  border:1px solid #ffb400;color:#ffd76a;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
+
+/* ===== ДЕКОР: КАМНИ, ИСКРЫ, ОСКОЛКИ ===== */
+.rocks{position:fixed;left:0;right:0;bottom:0;height:170px;pointer-events:none;z-index:1}
+.rocks i{position:absolute;bottom:-10px;display:block;
+  background:linear-gradient(155deg,#cdd9f6 0%,#8fa7e0 25%,#3c5aa8 60%,#1b2f6b 100%);
+  clip-path:polygon(12% 28%,38% 4%,70% 0%,96% 30%,100% 70%,86% 100%,12% 100%,0% 62%);
+  box-shadow:inset 0 -10px 16px rgba(0,0,30,.5)}
+.spark{position:fixed;width:6px;height:6px;border-radius:50%;background:#7ee7ff;z-index:1;
+  box-shadow:0 0 10px 3px rgba(60,200,255,.75);animation:tw 3s infinite}
+@keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}
+.shard{position:fixed;width:26px;height:64px;z-index:1;opacity:.9;
+  background:linear-gradient(200deg,#bff4ff,#22c3ee 40%,#0a6d92);
+  clip-path:polygon(45% 0,60% 35%,100% 30%,55% 55%,70% 100%,45% 65%,0 70%,40% 45%);
+  filter:drop-shadow(0 0 8px rgba(80,220,255,.8))}
+</style>
+</head>
+<body>
+<div class="logo">1WIN</div>
+
+<div class="wrap">
+  <div class="board" id="board"></div>
+
+  <div class="panel">
+    <div class="maxwin">
+      <span class="starico" id="starIco">⭐</span>
+      <span class="mw"><small>Ganho máx.</small><b id="maxWin">2162.00 R$</b></span>
+    </div>
+    <div class="traps">
+      <button id="tMinus">❮</button>
+      <span class="val"><b id="trapVal">3</b><small>Armadilhas</small></span>
+      <button id="tPlus">❯</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="betbox">
+      <button id="bMinus">−</button><b id="betVal">1.00 R$</b><button id="bPlus">+</button>
+    </div>
+    <button class="play" id="playBtn">Jogar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">x2.25</div>
+<div class="badge" id="adminBadge" hidden>🛠 FORCE SIGNAL: ON</div>
+<div class="rocks" id="rocks"></div>
+
+<script>
+/* ---------- Telegram WebApp ---------- */
+const tg = window.Telegram ? Telegram.WebApp : null;
+if (tg){ tg.ready(); tg.expand(); }
+const params = new URLSearchParams(location.search);
+let FORCE = params.get('admin') === '1';           // Force Signal для админа
+if (FORCE) document.getElementById('adminBadge').hidden = false;
+
+/* ---------- Декор ---------- */
+const rocksCfg=[[-2,90,70,-5],[7,70,52,4],[15,96,76,-3],[27,64,48,6],[35,84,66,-4],[46,72,56,3],
+[55,94,78,-6],[67,70,54,5],[76,88,70,-3],[88,76,58,4],[96,64,50,-6]];
+const rocksEl=document.getElementById('rocks');
+rocksCfg.forEach(([x,w,h,r])=>{const el=document.createElement('i');
+  el.style.left=x+'%';el.style.width=w+'px';el.style.height=h+'px';el.style.transform=rotate(${r}deg);
+  rocksEl.appendChild(el);});
+[[10,12],[3,29],[34,28],[75,12],[97,43],[88,8],[60,6]].forEach(([x,y],i)=>{
+  const s=document.createElement('span');s.className='spark';
+  s.style.left=x+'%';s.style.top=y+'%';s.style.animationDelay=(i*.4)+'s';document.body.appendChild(s);});
+[[32,26,15],[74,11,-10]].forEach(([x,y,r])=>{const d=document.createElement('span');d.className='shard';
+  d.style.left=x+'%';d.style.top=y+'%';d.style.transform=rotate(${r}deg);document.body.appendChild(d);});
+
+/* ---------- Сетка ---------- */
+const board=document.getElementById('board');
+for(let i=0;i<25;i++){const t=document.createElement('div');t.className='tile';board.appendChild(t);}
+const tiles=[...board.children];
+[26.08.2026 13:53] кидди: /* ---------- Состояние ---------- */
+let bet=1, traps=3, busy=false;
+const $=id=>document.getElementById(id);
+const fmt=v=>v.toFixed(2)+' R$';
+function refresh(){$('betVal').textContent=fmt(bet);$('trapVal').textContent=traps;
+  $('maxWin').textContent=fmt(bet*2162);}
+$('bMinus').onclick=()=>{bet=Math.max(1,bet-1);refresh();};
+$('bPlus').onclick =()=>{bet+=1;refresh();};
+$('tMinus').onclick=()=>{traps=Math.max(1,traps-1);refresh();};
+$('tPlus').onclick =()=>{traps=Math.min(24,traps+1);refresh();};
+
+/* Секретный тумблер Force Signal: 5 тапов по звезде */
+let taps=0;
+$('starIco').onclick=()=>{taps++;if(taps>=5){taps=0;FORCE=!FORCE;$('adminBadge').hidden=!FORCE;}};
+
+/* ---------- Звук (WebAudio, без файлов) ---------- */
+let AC;
+function beep(f,t=0.12,type='sine',g=.15,when=0){
+  AC=ACnew (window.AudioContextwindow.webkitAudioContext)();
+  const o=AC.createOscillator(),gn=AC.createGain();
+  o.type=type;o.frequency.value=f;o.connect(gn).connect(AC.destination);
+  const now=AC.currentTime+when;gn.gain.setValueAtTime(g,now);
+  gn.gain.exponentialRampToValueAtTime(.001,now+t);o.start(now);o.stop(now+t+.02);}
+const chime=()=>[660,880,1188].forEach((f,i)=>beep(f,.18,'triangle',.18,i*.09));
+
+/* ---------- Логика раунда ---------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function fairMult(t,p){let m=1;for(let i=0;i<p;i++)m*=(25-i)/(25-t-i);return m;}
+function pick4(){const a=[...Array(25).keys()];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,4);}
+
+$('playBtn').onclick=async()=>{
+  if(busy)return;busy=true;
+  tiles.forEach(t=>{t.classList.remove('open','scan');t.innerHTML='';});
+  $('playBtn').textContent='Escaneando...';
+  if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred('light');
+
+  /* 1) сканирование ~1.6 c */
+  let tick=0;
+  const iv=setInterval(()=>{const t=tiles[Math.random()*25|0];
+    t.classList.add('scan');setTimeout(()=>t.classList.remove('scan'),140);
+    if(++tick%2)beep(1400,.03,'square',.03);},70);
+  await sleep(1600);clearInterval(iv);
+
+  /* 2) ровно 4 ячейки: Force → углы 1,5,21,25 */
+  const cells=FORCE?[0,4,20,24]:pick4();
+  for(const c of cells){await sleep(140);
+    tiles[c].classList.add('open');tiles[c].innerHTML='<span class="star">⭐</span>';}
+
+  /* 3) звук + плашка множителя */
+  chime();
+  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+  const toast=$('toast');toast.textContent='x'+fairMult(traps,4).toFixed(2);
+  toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1800);
+
+  $('playBtn').textContent='Obter Sinal';busy=false;
+};
+refresh();
+</script>
+</body>
+</html>
