@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#050b14">
-<title>Mines — Signal IA</title>
+<title>Mines — Sinais IA</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -289,11 +289,11 @@ button{
     <div class="logo" id="logo">
       <span class="w">1</span><span class="b">WIN</span>
     </div>
-    <button class="switch" id="switchBtn">Switch to multiple</button>
+    <button class="switch" id="switchBtn">Modo Múltiplo</button>
   </div>
 
   <div class="status idle" id="status">
-    <span class="dot"></span><span id="statusTxt">AGUARDANDO COMANDO...</span>
+    <span class="dot"></span><span id="statusTxt">AGUARDANDO SINAL...</span>
   </div>
 
   <div class="board-wrap">
@@ -310,19 +310,19 @@ button{
     <div class="sel">
       <button id="tMinus" class="traps-ctrl">‹</button>
       <b id="trapVal">1</b>
-      <small>traps</small>
+      <small>minas</small>
       <button id="tPlus" class="traps-ctrl">›</button>
     </div>
   </div>
 
   <div class="controls">
-    <button class="play" id="playBtn">Play</button>
-    <button class="back" id="backBtn">Back</button>
+    <button class="play" id="playBtn">GERAR SINAL</button>
+    <button class="back" id="backBtn">FECHAR</button>
   </div>
 
 </div>
 
-<div class="badge" id="adminBadge" hidden>🛠 FORCE SIGNAL: ON</div>
+<div class="badge" id="adminBadge" hidden>🛠 SINAL FORÇADO: ATIVO</div>
 
 <script>
 var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -439,13 +439,13 @@ var CROSS_SVG =
 function setStatus(mode) {
   if (mode === 'an') {
     statusEl.className = 'status an';
-    statusTxt.textContent = 'ANALISANDO IA...';
+    statusTxt.textContent = 'ANALISANDO COM IA...';
   } else if (mode === 'ok') {
     statusEl.className = 'status ok';
-    statusTxt.textContent = 'SINAL PRONTO ✅';
+    statusTxt.textContent = 'SINAL CONFIRMADO ✅';
   } else {
     statusEl.className = 'status idle';
-    statusTxt.textContent = 'AGUARDANDO COMANDO...';
+    statusTxt.textContent = 'AGUARDANDO SINAL...';
   }
 }
 
@@ -496,7 +496,7 @@ function onLogo() {
 function onSwitchMode() {
   if (busy) return;
   multi = !multi;
-  switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
+  switchBtn.textContent = multi ? 'Modo Único' : 'Modo Múltiplo';
   tone(multi ? 880 : 520, 0.08, 'triangle', 0.18);
   hapticLight();
 }
