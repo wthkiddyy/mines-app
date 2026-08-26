@@ -1,396 +1,702 @@
 <!DOCTYPE html>
+<!-- [code_file:3] -->
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>CaveMines</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    body {
-      background: #080f1d;
-      color: #fff;
-      font-family: 'Montserrat', -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 16px 24px;
-      overflow: hidden;
-      position: relative;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mines | CaveMines 1WIN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    margin: 0;
+    padding: 10px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #050b14;
+    color: #eaf3ff;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    position: relative;
+  }
 
-    /* Фоновые кристаллы */
-    .bg-elements {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .rock-base {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 42px;
-      background: #0c1626;
-      clip-path: polygon(0 45%, 12% 20%, 25% 45%, 40% 15%, 58% 40%, 75% 15%, 90% 40%, 100% 20%, 100% 100%, 0 100%);
-    }
-    .c-gem {
-      position: absolute;
-      width: 10px;
-      height: 16px;
-      background: #00d2ff;
-      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-      filter: drop-shadow(0 0 8px #00d2ff);
-    }
-    .cg-left { left: 20px; bottom: 35px; transform: rotate(-10deg); }
-    .cg-right { right: 25px; bottom: 30px; transform: rotate(15deg); }
+  #app {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-    .app-container {
-      width: 100%;
-      max-width: 350px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      z-index: 1;
-    }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-    /* Шапка */
-    .brand-title {
-      font-size: 22px;
-      font-weight: 900;
-      font-style: italic;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-    .brand-title span { color: #0088ff; }
-    
-    .status-text {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: #38bdf8;
-      text-transform: uppercase;
-      height: 18px;
-    }
+  .logo-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    line-height: 1;
+    cursor: pointer;
+  }
 
-    /* Игровое поле CaveMines */
-    .cave-board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      background: #060b14;
-      padding: 8px;
-      border-radius: 14px;
-      border: 1.5px solid #142844;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-    }
+  .logo-1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 22px;
+    color: #ffffff;
+    letter-spacing: -1px;
+  }
 
-    .cave-slot {
-      background: #040810;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
+  .logo-win {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 22px;
+    letter-spacing: -1px;
+    background: linear-gradient(180deg, #7de8f5 0%, #38bdf8 55%, #0e7fb0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
-    /* Матовая бирюзовая плитка */
-    .cave-tile {
-      width: 100%;
-      height: 100%;
-      border-radius: 8px;
-      background: linear-gradient(180deg, #2db2c4 0%, #1b8191 100%);
-      border-top: 1px solid #6ee7b7;
-      border-bottom: 2px solid #0e4c56;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  .switch-btn {
+    background: #0077ff;
+    border-radius: 8px;
+    color: #eaf3ff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0,119,255,0.35);
+    transition: transform 0.12s ease;
+    white-space: nowrap;
+  }
 
-    .cave-tile.opened {
-      background: transparent;
-      border: none;
-      box-shadow: none;
-    }
+  .switch-btn:active {
+    transform: scale(0.97);
+  }
 
-    /* Оранжево-золотая звезда */
-    .cave-star {
-      width: 82%;
-      height: 82%;
-      filter: drop-shadow(0 0 8px rgba(255, 130, 0, 0.8));
-      animation: appear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    @keyframes appear {
-      0% { transform: scale(0.3); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+  .status-bar {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #6fb8e8;
+    padding: 5px 8px;
+    border-radius: 8px;
+    background: rgba(12,23,40,0.9);
+    border: 1px solid rgba(72,202,228,0.25);
+    min-height: 14px;
+    transition: all 0.3s ease;
+  }
 
-    /* Панели */
-    .control-box {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .c-row {
-      background: #0d1829;
-      border: 1px solid #162a47;
-      border-radius: 10px;
-      height: 46px;
-      padding: 0 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .info-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .lbl {
-      font-size: 9px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-    }
-    .val {
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
-    }
+  .status-bar.analyzing {
+    color: #ffcf4f;
+    border-color: rgba(255,207,79,0.35);
+    animation: pulseStatus 0.9s infinite;
+  }
 
-    .stepper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .c-btn {
-      background: #132238;
-      border: 1px solid #1e3a5f;
-      color: #94a3b8;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .c-btn:active {
-      background: #007bff;
-      color: #fff;
-    }
+  .status-bar.ready {
+    color: #2ee879;
+    border-color: rgba(46,232,121,0.4);
+  }
 
-    .main-button {
-      background: #0077ff;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 800;
-      padding: 0 20px;
-      height: 32px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 12px rgba(0, 119, 255, 0.4);
-    }
-    .main-button:active {
-      transform: scale(0.97);
-    }
-    .main-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  </style>
+  @keyframes pulseStatus {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .board-wrap {
+    background: #091322;
+    border-radius: 18px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1.5px solid #142844;
+    border-bottom: 2px solid #00c3ff;
+    box-shadow: 0 10px 25px -5px rgba(0,195,255,0.4), 0 6px 18px rgba(0,0,0,0.6);
+  }
+
+  .board {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .cell {
+    width: 100%;
+    height: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #208092 0%, #125563 60%, #0c3d47 100%);
+    border-top: 1px solid #48cae4;
+    box-shadow: inset 0 -3px 4px rgba(0,0,0,0.5), 0 3px 5px rgba(0,0,0,0.4);
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.12s ease;
+  }
+
+  .cell:active {
+    transform: scale(0.94);
+  }
+
+  .cell.flash {
+    animation: flashCell 0.22s ease;
+  }
+  @keyframes flashCell {
+    0% { box-shadow: inset 0 -3px 4px rgba(0,0,0,0.5), 0 3px 5px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 26px 8px rgba(255,255,255,0.9), inset 0 0 16px rgba(255,255,255,0.7); }
+    100% { box-shadow: inset 0 -3px 4px rgba(0,0,0,0.6); }
+  }
+
+  .cell.star,
+  .cell.trap {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .cell.star svg,
+  .cell.trap svg {
+    width: 85%;
+    height: 85%;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    animation: starPop 0.42s cubic-bezier(.2,1.5,.4,1) both;
+  }
+
+  @keyframes starPop {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    55% { transform: scale(1.18) rotate(6deg); opacity: 1; }
+    75% { transform: scale(0.95) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .cell.admin-hint {
+    box-shadow: 0 0 0 2px rgba(255,90,120,0.9);
+  }
+
+  .control-card {
+    background: #0c1628;
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid #162a47;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .traps-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .trap-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: none;
+    background: #101f33;
+    color: #90a4c0;
+    font-size: 15px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .trap-btn:active {
+    transform: scale(0.9);
+  }
+
+  .trap-btn svg {
+    width: 9px;
+    height: 14px;
+    display: block;
+  }
+
+  .trap-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+  }
+
+  .trap-number {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+  }
+
+  .trap-label {
+    font-size: 10px;
+    color: #7084a3;
+    line-height: 1;
+  }
+
+  .main-btn {
+    width: 100%;
+    height: 42px;
+    background: linear-gradient(180deg, #0077ff 0%, #0055d4 100%);
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,119,255,0.4);
+    letter-spacing: 0.5px;
+  }
+
+  .main-btn:active {
+    transform: scale(0.97);
+  }
+
+  .main-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .back-btn {
+    width: 90px;
+    height: 32px;
+    background: #962d18;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+  }
+
+  .back-btn:active {
+    transform: scale(0.97);
+  }
+
+  #adminBadge {
+    display: none;
+    position: fixed;
+    top: 6px;
+    left: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: #ff5678;
+    border: 1px solid rgba(255,86,120,0.5);
+    border-radius: 7px;
+    padding: 2px 6px;
+    background: rgba(255,86,120,0.08);
+    z-index: 50;
+  }
+
+  @media (max-height: 640px) {
+    body { padding: 6px; }
+    .board { max-width: 280px; }
+    .cell { min-height: 40px; }
+  }
+</style>
 </head>
 <body>
-  <div class="bg-elements">
-    <div class="rock-base"></div>
-    <div class="c-gem cg-left"></div>
-    <div class="c-gem cg-right"></div>
+<div id="adminBadge">ADMIN MODE</div>
+
+<div id="app">
+  <div class="header">
+    <div class="logo-wrap" id="logo">
+      <span class="logo-1">1</span><span class="logo-win">WIN</span>
+    </div>
+    <button class="switch-btn" id="switchBtn" type="button">Switch to multiple</button>
   </div>
 
-  <div class="app-container">
-    <div class="brand-title">1<span>WIN</span></div>
-    <div class="status-text" id="status-bar">Aguardando comando...</div>
+  <div id="status" class="status-bar">AGUARDANDO COMANDO...</div>
 
-    <div class="cave-board" id="board"></div>
-
-    <div class="control-box">
-      <div class="c-row">
-        <div class="info-group">
-          <svg id="star-admin" style="width: 20px; height: 20px; cursor: pointer;" viewBox="0 0 24 24" fill="#ff9900">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-          <div>
-            <div class="lbl">Ganho máx.</div>
-            <div class="val" id="win-display">2231.00 R$</div>
-          </div>
-        </div>
-        <div class="stepper">
-          <button class="c-btn" onclick="adjustTraps(-1)">‹</button>
-          <div style="text-align: center;">
-            <div class="val" id="traps-val">3</div>
-            <div class="lbl" style="font-size: 8px;">armadilhas</div>
-          </div>
-          <button class="c-btn" onclick="adjustTraps(1)">›</button>
-        </div>
-      </div>
-
-      <div class="c-row">
-        <div class="stepper">
-          <button class="c-btn" onclick="adjustBet(-1)">−</button>
-          <span class="val" id="bet-display">1.00 R$</span>
-          <button class="c-btn" onclick="adjustBet(1)">+</button>
-        </div>
-        <button class="main-button" id="signal-btn" onclick="runSignal()">Jogar</button>
-      </div>
+  <div class="board-wrap">
+    <div class="board" id="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+      <div class="cell" data-index="9"></div>
+      <div class="cell" data-index="10"></div>
+      <div class="cell" data-index="11"></div>
+      <div class="cell" data-index="12"></div>
+      <div class="cell" data-index="13"></div>
+      <div class="cell" data-index="14"></div>
+      <div class="cell" data-index="15"></div>
+      <div class="cell" data-index="16"></div>
+      <div class="cell" data-index="17"></div>
+      <div class="cell" data-index="18"></div>
+      <div class="cell" data-index="19"></div>
+      <div class="cell" data-index="20"></div>
+      <div class="cell" data-index="21"></div>
+      <div class="cell" data-index="22"></div>
+      <div class="cell" data-index="23"></div>
+      <div class="cell" data-index="24"></div>
     </div>
   </div>
 
-  <script>
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.expand();
-      Telegram.WebApp.ready();
+  <div class="control-card">
+    <div class="traps-row">
+      <button class="trap-btn" id="trapsMinus" aria-label="menos">
+        <svg viewBox="0 0 8 14"><path d="M7 1 L1 7 L7 13" fill="none" stroke="#90a4c0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="trap-value">
+        <span class="trap-number" id="trapsValue">1</span>
+        <span class="trap-label">traps</span>
+      </div>
+      <button class="trap-btn" id="trapsPlus" aria-label="mais">
+        <svg viewBox="0 0 8 14"><path d="M1 1 L7 7 L1 13" fill="none" stroke="#90a4c0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <button class="main-btn" id="signalBtn">Play</button>
+    <button class="back-btn" id="backBtn" type="button">Back</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STAR_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+    '  <linearGradient id="caveStarMain" x1="0%" y1="0%" x2="0%" y2="100%">' +
+    '    <stop offset="0%" stop-color="#ffcc80"/>' +
+    '    <stop offset="35%" stop-color="#ffa726"/>' +
+    '    <stop offset="75%" stop-color="#fb8c00"/>' +
+    '    <stop offset="100%" stop-color="#e65100"/>' +
+    '  </linearGradient>' +
+    '  <radialGradient id="caveStarHighlight" cx="50%" cy="38%" r="45%">' +
+    '    <stop offset="0%" stop-color="#fff8e1" stop-opacity="0.9"/>' +
+    '    <stop offset="50%" stop-color="#ffe082" stop-opacity="0.4"/>' +
+    '    <stop offset="100%" stop-color="#ffa726" stop-opacity="0"/>' +
+    '  </radialGradient>' +
+    '</defs>' +
+    '<path d="M 50 8 ' +
+    '         C 53 8, 57 24, 63 29 ' +
+    '         C 69 34, 88 33, 90 38 ' +
+    '         C 92 43, 76 54, 74 61 ' +
+    '         C 72 68, 80 87, 76 90 ' +
+    '         C 72 93, 56 80, 50 80 ' +
+    '         C 44 80, 28 93, 24 90 ' +
+    '         C 20 87, 28 68, 26 61 ' +
+    '         C 24 54, 8 43, 10 38 ' +
+    '         C 12 33, 31 34, 37 29 ' +
+    '         C 43 24, 47 8, 50 8 Z" ' +
+    '      fill="url(#caveStarMain)" stroke="#b23c00" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M 50 8 ' +
+    '         C 53 8, 57 24, 63 29 ' +
+    '         C 69 34, 88 33, 90 38 ' +
+    '         C 92 43, 76 54, 74 61 ' +
+    '         C 72 68, 80 87, 76 90 ' +
+    '         C 72 93, 56 80, 50 80 ' +
+    '         C 44 80, 28 93, 24 90 ' +
+    '         C 20 87, 28 68, 26 61 ' +
+    '         C 24 54, 8 43, 10 38 ' +
+    '         C 12 33, 31 34, 37 29 ' +
+    '         C 43 24, 47 8, 50 8 Z" ' +
+    '      fill="url(#caveStarHighlight)"/>' +
+    '</svg>';
+
+  var CROSS_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+    '  <linearGradient id="iceBar" x1="0%" y1="0%" x2="100%" y2="100%">' +
+    '    <stop offset="0%" stop-color="#ffffff"/>' +
+    '    <stop offset="25%" stop-color="#c2f0ff"/>' +
+    '    <stop offset="65%" stop-color="#4db8ff"/>' +
+    '    <stop offset="100%" stop-color="#1268a8"/>' +
+    '  </linearGradient>' +
+    '</defs>' +
+    '<g transform="rotate(45 50 50)" stroke="#094573" stroke-width="1">' +
+    '  <rect x="41" y="10" width="18" height="80" rx="9" fill="url(#iceBar)"/>' +
+    '  <rect x="10" y="41" width="80" height="18" rx="9" fill="url(#iceBar)"/>' +
+    '  <rect x="46" y="14" width="8" height="72" rx="4" fill="#ffffff" opacity="0.55"/>' +
+    '</g>' +
+    '</svg>';
+
+  function init() {
+    var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) {
+      try {
+        tg.ready();
+        tg.expand();
+        if (tg.setHeaderColor) tg.setHeaderColor('#050b14');
+        if (tg.setBackgroundColor) tg.setBackgroundColor('#050b14');
+      } catch (e) {}
     }
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(freq, duration = 0.08) {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
+    var urlParams = new URLSearchParams(window.location.search);
+    var adminMode = urlParams.get('admin') === '1';
+    var adminBadge = document.getElementById('adminBadge');
+    var logo = document.getElementById('logo');
+    var switchBtn = document.getElementById('switchBtn');
+    var trapsValueEl = document.getElementById('trapsValue');
+    var signalBtn = document.getElementById('signalBtn');
+    var backBtn = document.getElementById('backBtn');
+    var statusEl = document.getElementById('status');
+    var boardEl = document.getElementById('board');
+    var cells = Array.prototype.slice.call(boardEl.querySelectorAll('.cell'));
+
+    var GRID_SIZE = 25;
+    var CORNER_INDEXES = [0, 4, 20, 24];
+    var trapsCount = 1;
+    var mode = 'single';
+    var isBusy = false;
+
+    function setAdminMode(val) {
+      adminMode = val;
+      adminBadge.style.display = adminMode ? 'block' : 'none';
     }
+    setAdminMode(adminMode);
 
-    let traps = 3;
-    let bet = 1.00;
-    let taps = 0;
-    let isAdmin = new URLSearchParams(window.location.search).get('admin') === '1';
+    var logoTaps = 0;
+    var logoTapTimer = null;
 
-    const board = document.getElementById('board');
-[26.08.2026 15:02] кидди: const statusBar = document.getElementById('status-bar');
-    const trapsVal = document.getElementById('traps-val');
-    const betDisplay = document.getElementById('bet-display');
-    const winDisplay = document.getElementById('win-display');
-    const signalBtn = document.getElementById('signal-btn');
-
-    function initBoard() {
-      board.innerHTML = '';
-      for (let i = 0; i < 25; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'cave-slot';
-        slot.innerHTML = <div class="cave-tile" id="tile-${i}"></div>;
-        board.appendChild(slot);
-      }
-    }
-    initBoard();
-
-    function calcWin() {
-      const multipliers = [1, 1.25, 1.9, 2.7, 4.1, 5.8, 9.2, 14.5];
-      const mult = multipliers[traps] || (traps * 1.6);
-      winDisplay.innerText = (bet * mult * 100).toFixed(2) + ' R$';
-    }
-
-    function adjustTraps(delta) {
-      traps = Math.max(1, Math.min(7, traps + delta));
-      trapsVal.innerText = traps;
-      calcWin();
-      beep(420);
-    }
-
-    function adjustBet(delta) {
-      bet = Math.max(1, bet + delta);
-      betDisplay.innerText = bet.toFixed(2) + ' R$';
-      calcWin();
-      beep(360);
-    }
-
-    document.getElementById('star-admin').addEventListener('click', () => {
-      taps++;
-      if (taps >= 5) {
-        isAdmin = !isAdmin;
-        taps = 0;
-        beep(880, 0.2);
-        statusBar.innerText = isAdmin ? "ADMIN ATIVADO ⚡" : "Aguardando comando...";
+    logo.addEventListener('click', function () {
+      logoTaps++;
+      clearTimeout(logoTapTimer);
+      logoTapTimer = setTimeout(function () { logoTaps = 0; }, 1500);
+      if (logoTaps >= 5) {
+        logoTaps = 0;
+        setAdminMode(!adminMode);
+        beep(880, 0.08, 'square');
+        setTimeout(function () { beep(1200, 0.08, 'square'); }, 90);
       }
     });
 
-    const starSVG = 
-      <svg class="cave-star" viewBox="0 0 24 24">
-        <defs>
-          <linearGradient id="caveStar" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fffb91" />
-            <stop offset="45%" stop-color="#ff9900" />
-            <stop offset="100%" stop-color="#d93800" />
-          </linearGradient>
-        </defs>
-        <path fill="url(#caveStar)" d="M12 2l2.9 6.8 7.1.6-5.3 4.8 1.6 7-6.3-3.7-6.3 3.7 1.6-7L2 9.4l7.1-.6L12 2z"/>
-      </svg>
-    ;
+    var AudioCtx = window.AudioContext || window.webkitAudioContext;
+    var actx = null;
 
-    function runSignal() {
-      signalBtn.disabled = true;
-      statusBar.innerText = "Analisando IA...";
-      beep(300, 0.1);
+    function getCtx() {
+      if (!actx) {
+        try { actx = new AudioCtx(); } catch (e) { actx = null; }
+      }
+      return actx;
+    }
 
-      for (let i = 0; i < 25; i++) {
-        const t = document.getElementById('tile-' + i);
-        t.className = 'cave-tile';
-        t.innerHTML = '';
+    function beep(freq, dur, type, delay) {
+      var ctx = getCtx();
+      if (!ctx) return;
+      delay = delay || 0;
+      var t0 = ctx.currentTime + delay;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.18, t0 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+
+    function clickSound() {
+      beep(640, 0.045, 'sine');
+      beep(980, 0.03, 'sine', 0.01);
+    }
+
+    function starSound(i) {
+      var base = 760 + i * 55;
+      beep(base, 0.09, 'triangle');
+      beep(base * 1.4, 0.07, 'sine', 0.03);
+    }
+
+    function trapSound() {
+      beep(140, 0.22, 'sawtooth');
+      beep(90, 0.28, 'square', 0.05);
+    }
+
+    function analyzeSound() {
+      beep(200, 0.12, 'sawtooth');
+      beep(260, 0.10, 'sawtooth', 0.1);
+    }
+
+    function successSound() {
+      beep(660, 0.08, 'triangle');
+      beep(880, 0.10, 'triangle', 0.09);
+      beep(1180, 0.14, 'sine', 0.18);
+    }
+    document.body.addEventListener('touchstart', function unlock() {
+      var ctx = getCtx();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      document.body.removeEventListener('touchstart', unlock);
+    }, { once: true });
+
+    document.body.addEventListener('click', function unlock() {
+      var ctx = getCtx();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      document.body.removeEventListener('click', unlock);
+    }, { once: true });
+
+    function setStatus(text, cls) {
+      statusEl.textContent = text;
+      statusEl.className = 'status-bar' + (cls ? ' ' + cls : '');
+    }
+
+    function renderSwitchBtn() {
+      switchBtn.textContent = mode === 'single' ? 'Switch to multiple' : 'Switch to single';
+    }
+
+    function renderTraps() {
+      trapsValueEl.textContent = trapsCount;
+    }
+
+    function resetBoard() {
+      cells.forEach(function (c) {
+        c.className = 'cell';
+        c.innerHTML = '';
+      });
+    }
+
+    function pickRandomIndexes(count, pool) {
+      var arr = pool.slice();
+      var result = [];
+      while (result.length < count && arr.length > 0) {
+        var idx = Math.floor(Math.random() * arr.length);
+        result.push(arr.splice(idx, 1)[0]);
+      }
+      return result;
+    }
+
+    function generateSingleModeIndexes() {
+      var starCount = 3 + Math.floor(Math.random() * 5);
+      if (adminMode) {
+        var guaranteed = CORNER_INDEXES.slice(0, Math.min(starCount, CORNER_INDEXES.length));
+        var remaining = starCount - guaranteed.length;
+        if (remaining > 0) {
+          var pool = [];
+          for (var i = 0; i < GRID_SIZE; i++) {
+            if (guaranteed.indexOf(i) === -1) pool.push(i);
+          }
+          guaranteed = guaranteed.concat(pickRandomIndexes(remaining, pool));
+        }
+        return { stars: guaranteed, traps: [] };
+      }
+      var fullPool = [];
+      for (var j = 0; j < GRID_SIZE; j++) fullPool.push(j);
+      return { stars: pickRandomIndexes(starCount, fullPool), traps: [] };
+    }
+
+    function generateAllModeIndexes() {
+      var allIndexes = [];
+      for (var i = 0; i < GRID_SIZE; i++) allIndexes.push(i);
+
+      var trapPool = allIndexes.slice();
+      if (adminMode) {
+        trapPool = allIndexes.filter(function (i) {
+          return CORNER_INDEXES.indexOf(i) === -1;
+        });
       }
 
-      setTimeout(() => {
-        let targets = [];
-        if (isAdmin) {
-          targets = [0, 4, 12, 20, 24];
-        } else {
-          const count = Math.floor(Math.random() * 2) + 3;
-          while (targets.length < count) {
-            const idx = Math.floor(Math.random() * 25);
-            if (!targets.includes(idx)) targets.push(idx);
-          }
-        }
+      var traps = pickRandomIndexes(Math.min(trapsCount, trapPool.length), trapPool);
+      var stars = allIndexes.filter(function (i) {
+        return traps.indexOf(i) === -1;
+      });
 
-        targets.forEach((idx, i) => {
-          setTimeout(() => {
-            const tile = document.getElementById('tile-' + idx);
-            tile.className = 'cave-tile opened';
-            tile.innerHTML = starSVG;
-            beep(520 + i * 80, 0.1);
-          }, i * 180);
-        });
-
-        setTimeout(() => {
-          statusBar.innerText = "Sinal Pronto ✅";
-          signalBtn.disabled = false;
-        }, targets.length * 180 + 200);
-
-      }, 500);
+      return { stars: stars, traps: traps };
     }
-  </script>
-</body>
-</html>
+
+    function revealBoard(result) {
+      var allIdx = result.stars.map(function (i) {
+        return { idx: i, type: 'star' };
+      }).concat(result.traps.map(function (i) {
+        return { idx: i, type: 'trap' };
+      }));
+
+      allIdx.sort(function () { return Math.random() - 0.5; });
+
+      var delayStep = allIdx.length > 10 ? 45 : 220;
+
+      allIdx.forEach(function (item, order) {
+        setTimeout(function () {
+          var c = cells[item.idx];
+          c.classList.add('flash');
+
+          setTimeout(function () {
+            c.classList.remove('flash');
+            if (item.type === 'star') {
+              c.classList.add('star');
+              if (adminMode) c.classList.add('admin-hint');
+              c.innerHTML = STAR_SVG;
+              starSound(order % 8);
+            } else {
+              c.classList.add('trap');
+              c.innerHTML = CROSS_SVG;
+              trapSound();
+            }
+          }, 160);
+
+          if (tg && tg.HapticFeedback) {
+            try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+          }
+        }, order * delayStep);
+      });
+
+      return allIdx.length * delayStep + 500;
+    }
+
+    cells.forEach(function (c) {
+      c.addEventListener('click', function () {
+        clickSound();
+      });
+    });
+
+    switchBtn.addEventListener('click', function () {
+      mode = mode === 'single' ? 'all' : 'single';
+      clickSound();
+      renderSwitchBtn();
+    });
+    document.getElementById('trapsPlus').addEventListener('click', function () {
+      if (trapsCount < 7) trapsCount++;
+      clickSound();
+      renderTraps();
+    });
+
+    document.getElementById('trapsMinus').addEventListener('click', function () {
+      if (trapsCount > 1) trapsCount--;
+      clickSound();
+      renderTraps();
+    });
+
+    signalBtn.addEventListener('click', function () {
+      if (isBusy) return;
+      isBusy = true;
+      signalBtn.disabled = true;
+
+      resetBoard();
+      setStatus('ANALISANDO IA...', 'analyzing');
+      analyzeSound();
+      clickSound();
