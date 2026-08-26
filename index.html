@@ -323,6 +323,20 @@
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
     if (tg) { tg.expand(); }
 
+    // Твой Telegram ID
+    const OWNER_TELEGRAM_ID = 1733886157;
+
+    let tgUserId = null;
+    try {
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && typeof tg.initDataUnsafe.user.id === 'number') {
+        tgUserId = tg.initDataUnsafe.user.id;
+      }
+    } catch (e) {
+      tgUserId = null;
+    }
+
+    const isOwner = tgUserId === OWNER_TELEGRAM_ID;
+
     const gridEl = document.getElementById('gameGrid');
     const adminGridEl = document.getElementById('adminGrid');
     const statusText = document.getElementById('statusText');
@@ -334,7 +348,6 @@
     let mines = 3;
     let customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]');
 
-    // Создание 25 ячеек
     for (let i = 0; i < 25; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -351,27 +364,35 @@
       adminGridEl.appendChild(aCell);
     }
 
-    // Секретный вход в админку
     const urlParams = new URLSearchParams(window.location.search);
-    let logoClicks = 0;
+    const isAdminByParam = urlParams.get('admin') === 'dev77';
+    const isAdmin = isOwner || isAdminByParam;
 
-    function showAdminBtn() {
+    let logoClicks = 0;
+    let logoClickTimeout = null;
+
+    if (isAdminByParam) {
       adminToggleBtn.style.display = 'block';
     }
 
-    if (urlParams.get('admin') === 'dev77') {
-      showAdminBtn();
-    }
-
+    // Секретный триггер по логотипу — ТОЛЬКО для владельца
     appLogo.addEventListener('click', () => {
+      if (!isAdmin) return;
+
       logoClicks++;
-      if (logoClicks >= 5) {
-        adminToggleBtn.style.display = (adminToggleBtn.style.display === 'block') ? 'none' : 'block';
+      if (logoClickTimeout) clearTimeout(logoClickTimeout);
+      logoClickTimeout = setTimeout(() => {
         logoClicks = 0;
+      }, 2000); // 2 секунды на 5 кликов
+
+      if (logoClicks >= 5) {
+        logoClicks = 0;
+        adminToggleBtn.style.display = (adminToggleBtn.style.display === 'block') ? 'none' : 'block';
       }
     });
 
     adminToggleBtn.addEventListener('click', () => {
+      if (!isAdmin) return;
       adminModal.style.display = 'flex';
     });
 
@@ -390,7 +411,6 @@
       adminModal.style.display = 'none';
     });
 
-    // Мины +/-
     document.getElementById('btnMinus').addEventListener('click', () => {
       if (mines > 1) { mines--; document.getElementById('minesCount').textContent = mines; }
     });
@@ -398,31 +418,37 @@
       if (mines < 7) { mines++; document.getElementById('minesCount').textContent = mines; }
     });
 
-    // Генерация сигнала
+    // Настройки анимации
+    const FLASH_INTERVAL_MS = 140;       // скорость мерцания при сканировании
+    const FLASH_HIGHLIGHT_MS = 180;      // подсветка клетки
+    const FLASH_COUNT = 15;              // общее количество миганий
+    const STAR_REVEAL_DELAY_MS = 450;    // плавная пауза между появлением звёзд
+
     btnGenerate.addEventListener('click', () => {
       btnGenerate.disabled = true;
       statusText.textContent = 'Analisando algoritmo...';
       statusText.style.color = '#38bdf8';
 
-      // Очистка предыдущих звезд
       gridEl.querySelectorAll('.cell').forEach(c => c.classList.remove('star'));
 
-      // Анимация поиска
       let flashes = 0;
       const flashInterval = setInterval(() => {
         const randIndex = Math.floor(Math.random() * 25);
         const cell = gridEl.children[randIndex];
+        const originalBg = cell.style.background;
+
         cell.style.background = '#00d4ff';
         setTimeout(() => {
-          cell.style.background = '';
-        }, 120);
+          cell.style.background = originalBg;
+        }, FLASH_HIGHLIGHT_MS);
+
         flashes++;
 
-        if (flashes > 12) {
+        if (flashes >= FLASH_COUNT) {
           clearInterval(flashInterval);
           revealSignal();
         }
-      }, 100);
+      }, FLASH_INTERVAL_MS);
     });
 
     function revealSignal() {
@@ -440,14 +466,14 @@
       targets.forEach((idx, i) => {
         setTimeout(() => {
           gridEl.children[idx].classList.add('star');
-        }, i * 180);
+        }, i * STAR_REVEAL_DELAY_MS);
       });
 
       setTimeout(() => {
         statusText.textContent = 'Sinal Confirmado!';
         statusText.style.color = '#22c55e';
         btnGenerate.disabled = false;
-      }, targets.length * 180 + 200);
+      }, targets.length * STAR_REVEAL_DELAY_MS + 400);
     }
   </script>
 </body>
