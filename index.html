@@ -9,6 +9,10 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 [hidden]{display:none!important}
+/* Псевдоэлементы (кристаллы, блики) НИКОГДА не перехватывают тапы */
+*::before,*::after{pointer-events:none}
+/* Все кнопки и селекторы гарантированно кликабельны поверх любого декора */
+button,.btn,.switch,.traps-ctrl{cursor:pointer;pointer-events:auto;z-index:999;position:relative}
 html,body{height:100%}
 /* Глубокий космическо-пещерный фон */
 body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
@@ -22,7 +26,7 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
 .logo .w{color:#fff}
 .logo .b{color:#2f9beb}
 .switch{background:linear-gradient(180deg,#3b9df0,#1f7fd6);border:none;border-radius:10px;
-  padding:10px 16px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+  padding:10px 16px;color:#fff;font-size:13px;font-weight:700;
   box-shadow:0 4px 14px rgba(40,130,240,.35)}
 .switch:active{transform:scale(.97)}
 
@@ -93,7 +97,7 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
   justify-content:center;padding:10px 12px;gap:10px}
 /* Селектор ловушек: отзывчивые стрелки, gap 20px */
 .sel{display:flex;align-items:center;gap:20px;background:#0d1219;border-radius:12px;padding:8px 20px}
-.sel button{background:none;border:none;color:#8b93a7;font-size:20px;cursor:pointer;line-height:1;
+.sel button{background:none;border:none;color:#8b93a7;font-size:20px;line-height:1;
   padding:6px 12px;border-radius:8px;transition:transform .08s}
 .sel button:active{color:#fff;background:rgba(80,150,255,.18);transform:scale(.9)}
 .sel b{color:#fff;font-size:16px;min-width:16px;text-align:center}
@@ -102,11 +106,11 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
 /* ===== КНОПКИ: Play широкая, Back компактная под ней ===== */
 .controls{margin-top:12px;border-radius:14px;background:#141a24;padding:12px}
 .play{display:block;width:100%;height:42px;background:#0077ff;border:none;border-radius:10px;
-  color:#fff;font-size:16px;font-weight:800;letter-spacing:.5px;cursor:pointer;
+  color:#fff;font-size:16px;font-weight:800;letter-spacing:.5px;
   box-shadow:0 4px 14px rgba(0,119,255,.35)}
 .play:active{transform:scale(.98)}
 .back{display:block;width:90px;height:32px;background:#962d18;border:none;border-radius:8px;
-  color:#ffd9c9;font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;margin:10px auto 0}
+  color:#ffd9c9;font-size:13px;font-weight:700;letter-spacing:.5px;margin:10px auto 0}
 .back:active{transform:scale(.96)}
 
 /* ===== БЕЙДЖ АДМИНА ===== */
@@ -152,13 +156,14 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
 
   <div class="panel">
     <div class="sel">
-      <button id="tMinus">‹</button>
+      <button id="tMinus" class="traps-ctrl">‹</button>
       <b id="trapVal">1</b>
       <small>traps</small>
-      <button id="tPlus">›</button>
+      <button id="tPlus" class="traps-ctrl">›</button>
     </div>
   </div>
-<div class="controls">
+
+  <div class="controls">
     <button class="play" id="playBtn">Play</button>
     <button class="back" id="backBtn">Back</button>
   </div>
@@ -168,153 +173,173 @@ body{font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#dfe6f2;overflow:auto;
 <div class="badge" id="adminBadge" hidden>🛠 FORCE SIGNAL: ON</div>
 
 <script>
-var tg = window.Telegram ? Telegram.WebApp : null;
-if (tg) { tg.ready(); tg.expand(); }
-var FORCE = new URLSearchParams(location.search).get('admin') === '1';
-if (FORCE) document.getElementById('adminBadge').hidden = false;
+document.addEventListener('DOMContentLoaded', function () {
 
-/* ---------- Виброотклик Telegram ---------- */
-function hapticLight(){
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-    try { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch (e) {}
+  /* ---------- Безопасная инициализация Telegram WebApp ---------- */
+  if (window.Telegram && window.Telegram.WebApp) {
+    try {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    } catch (e) {}
   }
-}
-function hapticSuccess(){
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-    try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-  }
-}
+  var tg = window.Telegram ? window.Telegram.WebApp : null;
+  var FORCE = new URLSearchParams(location.search).get('admin') === '1';
+  if (FORCE) document.getElementById('adminBadge').hidden = false;
 
-/* ---------- SVG-ассеты ---------- */
-/* Финальная звезда: радиальный персиковый градиент + 10 фасетов, без круглого блика */
-var STAR_SVG =
-'<svg viewBox="0 0 100 100">' +
-'<polygon points="50,2 61.8,33.8 95.7,35.2 69,56.2 78.2,88.8 50,70 21.8,88.8 31,56.2 4.3,35.2 38.2,33.8" fill="url(#sg)" stroke="#b23b10" stroke-width="3" stroke-linejoin="round"/>' +
-'<polygon points="50,50 50,2 61.8,33.8" fill="rgba(160,40,5,.4)"/>' +
-'<polygon points="50,50 95.7,35.2 69,56.2" fill="rgba(160,40,5,.4)"/>' +
-'<polygon points="50,50 78.2,88.8 50,70" fill="rgba(160,40,5,.4)"/>' +
-'<polygon points="50,50 21.8,88.8 31,56.2" fill="rgba(160,40,5,.4)"/>' +
-'<polygon points="50,50 4.3,35.2 38.2,33.8" fill="rgba(160,40,5,.4)"/>' +
-'<polygon points="50,50 50,2 38.2,33.8" fill="rgba(255,240,200,.35)"/>' +
-'<polygon points="50,50 95.7,35.2 61.8,33.8" fill="rgba(255,240,200,.35)"/>' +
-'<polygon points="50,50 78.2,88.8 69,56.2" fill="rgba(255,240,200,.35)"/>' +
-'<polygon points="50,50 21.8,88.8 50,70" fill="rgba(255,240,200,.35)"/>' +
-'<polygon points="50,50 4.3,35.2 31,56.2" fill="rgba(255,240,200,.35)"/>' +
-'</svg>';
-
-/* Ледяной крест со стеклянными гранями */
-var CROSS_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ice" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="30%" stop-color="#a8f0ff"/><stop offset="70%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0369a1"/></linearGradient></defs><g transform="rotate(45 50 50)" stroke="#024e7a" stroke-width="1.5"><rect x="38" y="8" width="24" height="84" rx="12" fill="url(#ice)"/><rect x="8" y="38" width="84" height="24" rx="12" fill="url(#ice)"/><rect x="44" y="14" width="12" height="72" rx="6" fill="#fff" opacity="0.65"/><rect x="14" y="44" width="72" height="12" rx="6" fill="#fff" opacity="0.65"/></g></svg>';
-
-/* ---------- DOM / состояние ---------- */
-var cells=Array.prototype.slice.call(document.getElementById('board').children);
-var playBtn=document.getElementById('playBtn');
-var switchBtn=document.getElementById('switchBtn');
-var traps=1, busy=false, multi=false;
-var PICKS_MIN=3, PICKS_MAX=5;
-
-function $(id){return document.getElementById(id);}
-function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
-
-function setStatus(st){
-  $('status').className='status '+st;
-  $('statusTxt').textContent = st==='an' ? 'ANALISANDO IA...' : (st==='ok' ? 'SINAL PRONTO ✅' : 'AGUARDANDO COMANDO...');
-}
-
-/* Селектор мин: отзывчивые стрелки + вибро */
-$('tMinus').onclick=function(){traps=Math.max(1,traps-1);$('trapVal').textContent=traps;hapticLight();};
-$('tPlus').onclick=function(){traps=Math.min(24,traps+1);$('trapVal').textContent=traps;hapticLight();};
-
-/* Switch to multiple / single */
-switchBtn.onclick=function(){
-  multi=!multi;
-  switchBtn.textContent=multi?'Switch to single':'Switch to multiple';
-  beep(multi?880:520,.08,'triangle',.1);
-  hapticLight();
-};
-/* Секретный Force Signal: 5 тапов по логотипу 1WIN */
-var taps=0;
-$('logo').onclick=function(){taps++;if(taps>=5){taps=0;FORCE=!FORCE;$('adminBadge').hidden=!FORCE;hapticLight();}};
-
-/* ---------- Звук: Web Audio API ---------- */
-var AC=null;
-function beep(f,t,type,g,when){
-  t=t0.12;type=type'sine';g=(g===undefined)?0.15:g;when=when||0;
-  try{
-    AC=ACnew (window.AudioContextwindow.webkitAudioContext)();
-    var o=AC.createOscillator(),gn=AC.createGain();
-    o.type=type;o.frequency.value=f;o.connect(gn);gn.connect(AC.destination);
-    var now=AC.currentTime+when;
-    gn.gain.setValueAtTime(g,now);gn.gain.exponentialRampToValueAtTime(0.001,now+t);
-    o.start(now);o.stop(now+t+0.02);
-  }catch(e){}
-}
-function chime(){[660,880,1188].forEach(function(f,i){beep(f,.18,'triangle',.18,i*.09);});}
-
-/* ---------- Раунд ---------- */
-function clearBoard(){cells.forEach(function(c){c.className='cell';c.innerHTML='';});}
-
-playBtn.onclick=async function(){
-  if(busy)return; busy=true;
-  clearBoard();
-  setStatus('an'); hapticLight();
-
-  /* Сканирование ~1.6 c */
-  var tickN=0;
-  var iv=setInterval(function(){
-    var c=cells[Math.floor(Math.random()*25)];
-    c.classList.add('scan');setTimeout(function(){c.classList.remove('scan');},140);
-    tickN++;if(tickN%2)beep(1400,.03,'square',.03);
-  },70);
-  await sleep(1600); clearInterval(iv);
-
-  /* Расстановка ловушек (Force → углы 1,5,21,25 всегда безопасны) */
-  var corners=[0,4,20,24];
-  var pool=[];for(var i=0;i<25;i++){if(!(FORCE&&corners.indexOf(i)>=0))pool.push(i);}
-  shuffle(pool);
-  var trapSet=pool.slice(0,traps);
-  var safe=[];for(var s2=0;s2<25;s2++){if(trapSet.indexOf(s2)<0)safe.push(s2);}
-
-  if(multi){
-    /* MULTIPLE: всё поле — звёзды + ледяные кресты по числу traps */
-    for(var x=0;x<25;x++){
-      (function(idx){setTimeout(function(){
-        var c=cells[idx];
-        if(trapSet.indexOf(idx)>=0){c.classList.add('boom');c.innerHTML=CROSS_SVG;beep(220,.06,'sawtooth',.05);}
-        else{c.classList.add('open');c.innerHTML=STAR_SVG;}
-        hapticLight(); /* вибро на открытии каждой ячейки */
-      },idx*28);})(x);
+  /* ---------- Виброотклик Telegram ---------- */
+  function hapticLight(){
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+      try { window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch (e) {}
     }
-    await sleep(25*28+350);
-  }else{
-    /* SINGLE: 3–5 сигнальных звёзд (Force → строго углы 1,5,21,25) */
-    var n=PICKS_MIN+Math.floor(Math.random()*(PICKS_MAX-PICKS_MIN+1));
-    var stars=FORCE?corners:shuffle(safe.slice()).slice(0,n);
-    for(var k=0;k<stars.length;k++){
-      await sleep(150);
-      var c=cells[stars[k]];
-      c.classList.add('open');c.innerHTML=STAR_SVG;
-      beep(980+k*120,.09,'triangle',.12);
-      hapticLight(); /* вибро на открытии каждой ячейки */
+  }
+  function hapticSuccess(){
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+      try { window.Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch (e) {}
     }
   }
 
-  chime(); hapticSuccess();
-  setStatus('ok');
-  busy=false;
-};
+  /* ---------- SVG-ассеты ---------- */
+  var STAR_SVG =
+  '<svg viewBox="0 0 100 100">' +
+  '<polygon points="50,2 61.8,33.8 95.7,35.2 69,56.2 78.2,88.8 50,70 21.8,88.8 31,56.2 4.3,35.2 38.2,33.8" fill="url(#sg)" stroke="#b23b10" stroke-width="3" stroke-linejoin="round"/>' +
+  '<polygon points="50,50 50,2 61.8,33.8" fill="rgba(160,40,5,.4)"/>' +
+  '<polygon points="50,50 95.7,35.2 69,56.2" fill="rgba(160,40,5,.4)"/>' +
+  '<polygon points="50,50 78.2,88.8 50,70" fill="rgba(160,40,5,.4)"/>' +
+  '<polygon points="50,50 21.8,88.8 31,56.2" fill="rgba(160,40,5,.4)"/>' +
+  '<polygon points="50,50 4.3,35.2 38.2,33.8" fill="rgba(160,40,5,.4)"/>' +
+  '<polygon points="50,50 50,2 38.2,33.8" fill="rgba(255,240,200,.35)"/>' +
+  '<polygon points="50,50 95.7,35.2 61.8,33.8" fill="rgba(255,240,200,.35)"/>' +
+  '<polygon points="50,50 78.2,88.8 69,56.2" fill="rgba(255,240,200,.35)"/>' +
+  '<polygon points="50,50 21.8,88.8 50,70" fill="rgba(255,240,200,.35)"/>' +
+  '<polygon points="50,50 4.3,35.2 31,56.2" fill="rgba(255,240,200,.35)"/>' +
+  '</svg>';
 
-/* Back: сброс поля + возврат в бот */
-$('backBtn').onclick=function(){
-  if(busy)return;
-  clearBoard();
+  var CROSS_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ice" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="30%" stop-color="#a8f0ff"/><stop offset="70%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0369a1"/></linearGradient></defs><g transform="rotate(45 50 50)" stroke="#024e7a" stroke-width="1.5"><rect x="38" y="8" width="24" height="84" rx="12" fill="url(#ice)"/><rect x="8" y="38" width="84" height="24" rx="12" fill="url(#ice)"/><rect x="44" y="14" width="12" height="72" rx="6" fill="#fff" opacity="0.65"/><rect x="14" y="44" width="72" height="12" rx="6" fill="#fff" opacity="0.65"/></g></svg>';
+
+  /* ---------- DOM / состояние ---------- */
+  var cells = Array.prototype.slice.call(document.getElementById('board').children);
+  var playBtn = document.getElementById('playBtn');
+  var backBtn = document.getElementById('backBtn');
+  var switchBtn = document.getElementById('switchBtn');
+  var tMinus = document.getElementById('tMinus');
+  var tPlus = document.getElementById('tPlus');
+  var traps = 1, busy = false, multi = false;
+  var PICKS_MIN = 3, PICKS_MAX = 5;
+  function $(id){ return document.getElementById(id); }
+  function shuffle(a){ for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function setStatus(st){
+    $('status').className = 'status ' + st;
+    $('statusTxt').textContent = st==='an' ? 'ANALISANDO IA...' : (st==='ok' ? 'SINAL PRONTO ✅' : 'AGUARDANDO COMANDO...');
+  }
+
+  /* ---------- Звук: Web Audio API ---------- */
+  var AC = null;
+  function beep(f,t,type,g,when){
+    t=t0.12; type=type'sine'; g=(g===undefined)?0.15:g; when=when||0;
+    try{
+      AC = AC  new (window.AudioContextwindow.webkitAudioContext)();
+      var o=AC.createOscillator(), gn=AC.createGain();
+      o.type=type; o.frequency.value=f; o.connect(gn); gn.connect(AC.destination);
+      var now=AC.currentTime+when;
+      gn.gain.setValueAtTime(g,now); gn.gain.exponentialRampToValueAtTime(0.001,now+t);
+      o.start(now); o.stop(now+t+0.02);
+    }catch(e){}
+  }
+  function chime(){ [660,880,1188].forEach(function(f,i){ beep(f,.18,'triangle',.18,i*.09); }); }
+
+  /* ---------- Обработчики: селектор ловушек ---------- */
+  tMinus.addEventListener('click', function(){
+    traps = Math.max(1, traps-1);
+    $('trapVal').textContent = traps;
+    hapticLight();
+  });
+  tPlus.addEventListener('click', function(){
+    traps = Math.min(24, traps+1);
+    $('trapVal').textContent = traps;
+    hapticLight();
+  });
+
+  /* ---------- Обработчик: Switch to multiple / single ---------- */
+  switchBtn.addEventListener('click', function(){
+    multi = !multi;
+    switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
+    beep(multi?880:520,.08,'triangle',.1);
+    hapticLight();
+  });
+
+  /* ---------- Секретный Force Signal: 5 тапов по логотипу 1WIN ---------- */
+  var taps = 0;
+  $('logo').addEventListener('click', function(){
+    taps++;
+    if (taps>=5){ taps=0; FORCE=!FORCE; $('adminBadge').hidden=!FORCE; hapticLight(); }
+  });
+
+  /* ---------- Раунд ---------- */
+  function clearBoard(){ cells.forEach(function(c){ c.className='cell'; c.innerHTML=''; }); }
+
+  playBtn.addEventListener('click', async function(){
+    if (busy) return; busy = true;
+    clearBoard();
+    setStatus('an'); hapticLight();
+
+    /* Сканирование ~1.6 c */
+    var tickN = 0;
+    var iv = setInterval(function(){
+      var c = cells[Math.floor(Math.random()*25)];
+      c.classList.add('scan'); setTimeout(function(){ c.classList.remove('scan'); },140);
+      tickN++; if (tickN%2) beep(1400,.03,'square',.03);
+    },70);
+    await sleep(1600); clearInterval(iv);
+
+    /* Расстановка ловушек (Force → углы 1,5,21,25 всегда безопасны) */
+    var corners = [0,4,20,24];
+    var pool = []; for (var i=0;i<25;i++){ if(!(FORCE && corners.indexOf(i)>=0)) pool.push(i); }
+    shuffle(pool);
+    var trapSet = pool.slice(0,traps);
+    var safe = []; for (var s2=0;s2<25;s2++){ if(trapSet.indexOf(s2)<0) safe.push(s2); }
+
+    if (multi){
+      /* MULTIPLE: всё поле — звёзды + ледяные кресты по числу traps */
+      for (var x=0;x<25;x++){
+        (function(idx){ setTimeout(function(){
+          var c = cells[idx];
+          if (trapSet.indexOf(idx)>=0){ c.classList.add('boom'); c.innerHTML=CROSS_SVG; beep(220,.06,'sawtooth',.05); }
+          else { c.classList.add('open'); c.innerHTML=STAR_SVG; }
+          hapticLight();
+        }, idx*28); })(x);
+      }
+      await sleep(25*28+350);
+    } else {
+      /* SINGLE: 3–5 сигнальных звёзд (Force → строго углы 1,5,21,25) */
+      var n = PICKS_MIN + Math.floor(Math.random()*(PICKS_MAX-PICKS_MIN+1));
+      var stars = FORCE ? corners : shuffle(safe.slice()).slice(0,n);
+      for (var k=0;k<stars.length;k++){
+        await sleep(150);
+        var c = cells[stars[k]];
+        c.classList.add('open'); c.innerHTML = STAR_SVG;
+        beep(980+k*120,.09,'triangle',.12);
+        hapticLight();
+      }
+    }
+
+    chime(); hapticSuccess();
+    setStatus('ok');
+    busy = false;
+  });
+/* ---------- Обработчик: Back (сброс поля + возврат в бот) ---------- */
+  backBtn.addEventListener('click', function(){
+    if (busy) return;
+    clearBoard();
+    setStatus('idle');
+    beep(420,.1,'triangle',.1);
+    hapticLight();
+    if (tg){ try { tg.close(); } catch (e) {} }
+  });
+
   setStatus('idle');
-  beep(420,.1,'triangle',.1);
-  hapticLight();
-  if(tg){try{tg.close();}catch(e){}}
-};
-
-setStatus('idle');
+});
 </script>
 </body>
 </html>
