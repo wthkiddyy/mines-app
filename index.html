@@ -340,17 +340,16 @@ var statusTxt = document.getElementById('statusTxt');
 var trapValEl = document.getElementById('trapVal');
 var switchBtn = document.getElementById('switchBtn');
 var adminBadge = document.getElementById('adminBadge');
-var playBtn = document.getElementById('playBtn');
-var backBtn = document.getElementById('backBtn');
-var tMinus = document.getElementById('tMinus');
-var tPlus = document.getElementById('tPlus');
 var logoEl = document.getElementById('logo');
+var tMinusEl = document.getElementById('tMinus');
+var tPlusEl = document.getElementById('tPlus');
+var playBtnEl = document.getElementById('playBtn');
+var backBtnEl = document.getElementById('backBtn');
 
 var traps = 1;
 var multi = false;
 var busy = false;
-var FORCE = new URLSearchParams(location.search).get('admin') === '1';
-if (FORCE) adminBadge.hidden = false;
+var FORCE = false;
 
 var AC = null;
 function getAudioContext() {
@@ -393,23 +392,31 @@ function hapticSuccess() {
   }
 }
 
-var STAR_SVG =
-  '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
+var STAR_SVG = '<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">' +
   '<defs>' +
-  '  <linearGradient id="caveStarMain" x1="0%" y1="0%" x2="0%" y2="100%">' +
-  '    <stop offset="0%" stop-color="#ffcc80"/>' +
-  '    <stop offset="35%" stop-color="#ffa726"/>' +
-  '    <stop offset="75%" stop-color="#fb8c00"/>' +
-  '    <stop offset="100%" stop-color="#e65100"/>' +
+  '  <linearGradient id="starBase" x1="0%" y1="0%" x2="0%" y2="100%">' +
+  '    <stop offset="0%" stop-color="#fff59d"/>' +
+  '    <stop offset="25%" stop-color="#ffb300"/>' +
+  '    <stop offset="70%" stop-color="#fb8c00"/>' +
+  '    <stop offset="100%" stop-color="#d84315"/>' +
   '  </linearGradient>' +
-  '  <radialGradient id="caveStarHighlight" cx="50%" cy="38%" r="45%">' +
-  '    <stop offset="0%" stop-color="#fff8e1" stop-opacity="0.9"/>' +
-  '    <stop offset="50%" stop-color="#ffe082" stop-opacity="0.4"/>' +
-  '    <stop offset="100%" stop-color="#ffa726" stop-opacity="0"/>' +
-  '  </radialGradient>' +
+  '  <linearGradient id="facetLight" x1="0%" y1="0%" x2="100%" y2="100%">' +
+  '    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>' +
+  '    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>' +
+  '  </linearGradient>' +
+  '  <filter id="starGlow" x="-20%" y="-20%" width="140%" height="140%">' +
+  '    <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/>' +
+  '    <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#ffb300" flood-opacity="0.7"/>' +
+  '  </filter>' +
   '</defs>' +
-  '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#caveStarMain)" stroke="#b23c00" stroke-width="1.2" stroke-linejoin="round"/>' +
-  '<path d="M 50 8 C 53 8, 57 24, 63 29 C 69 34, 88 33, 90 38 C 92 43, 76 54, 74 61 C 72 68, 80 87, 76 90 C 72 93, 56 80, 50 80 C 44 80, 28 93, 24 90 C 20 87, 28 68, 26 61 C 24 54, 8 43, 10 38 C 12 33, 31 34, 37 29 C 43 24, 47 8, 50 8 Z" fill="url(#caveStarHighlight)"/>' +
+  '<g filter="url(#starGlow)">' +
+  '  <polygon points="50,6 64,34 95,36 71,57 79,88 50,71 21,88 29,57 5,36 36,34" fill="url(#starBase)" stroke="#bf360c" stroke-width="1.2" stroke-linejoin="round"/>' +
+  '  <polygon points="50,6 50,71 21,88 29,57 5,36 36,34" fill="#000" opacity="0.14"/>' +
+  '  <polygon points="50,6 64,34 50,71" fill="url(#facetLight)"/>' +
+  '  <polygon points="50,6 36,34 50,71" fill="#fff" opacity="0.25"/>' +
+  '  <polygon points="95,36 71,57 50,71" fill="url(#facetLight)"/>' +
+  '  <circle cx="50" cy="48" r="7" fill="#fff" opacity="0.4" filter="blur(2px)"/>' +
+  '</g>' +
   '</svg>';
 
 var CROSS_SVG =
@@ -458,40 +465,21 @@ function shuffle(arr) {
 }
 
 function bindAction(el, fn) {
-  if (!el) return;
-  el.addEventListener('pointerdown', function (e) {
-    e.stopPropagation();
+  if (!el || !fn) return;
+  var lastDown = 0;
+  el.addEventListener('pointerdown', function (ev) {
+    lastDown = Date.now();
+    fn();
+  });
+  el.addEventListener('click', function (ev) {
+    if (Date.now() - lastDown < 350) return;
     fn();
   });
 }
 
-bindAction(switchBtn, function () {
-  if (busy) return;
-  multi = !multi;
-  switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
-  tone(multi ? 880 : 520, 0.08, 'triangle', 0.18);
-  hapticLight();
-});
-
-bindAction(tMinus, function () {
-  if (busy) return;
-  traps = Math.max(1, traps - 1);
-  trapValEl.textContent = traps;
-  tone(420, 0.06, 'sine', 0.1);
-  hapticLight();
-});
-
-bindAction(tPlus, function () {
-  if (busy) return;
-  traps = Math.min(24, traps + 1);
-  trapValEl.textContent = traps;
-  tone(640, 0.06, 'sine', 0.1);
-  hapticLight();
-});
-
 var logoTapCount = 0;
 var logoTapTimer = null;
-bindAction(logoEl, function () {
+function onLogo() {
   logoTapCount++;
   if (logoTapTimer) clearTimeout(logoTapTimer);
   logoTapTimer = setTimeout(function () { logoTapCount = 0; }, 800);
@@ -503,7 +491,31 @@ bindAction(logoEl, function () {
     tone(1200, 0.08, 'square', 0.18, 0.08);
     hapticLight();
   }
-});
+}
+
+function onSwitchMode() {
+  if (busy) return;
+  multi = !multi;
+  switchBtn.textContent = multi ? 'Switch to single' : 'Switch to multiple';
+  tone(multi ? 880 : 520, 0.08, 'triangle', 0.18);
+  hapticLight();
+}
+
+function onTrapsMinus() {
+  if (busy) return;
+  traps = Math.max(1, traps - 1);
+  trapValEl.textContent = traps;
+  tone(420, 0.06, 'sine', 0.1);
+  hapticLight();
+}
+
+function onTrapsPlus() {
+  if (busy) return;
+  traps = Math.min(24, traps + 1);
+  trapValEl.textContent = traps;
+  tone(640, 0.06, 'sine', 0.1);
+  hapticLight();
+}
 
 function scanBoard(callback) {
   setStatus('an');
@@ -548,7 +560,7 @@ function revealSingle(trapSet, safeSet) {
     var idx = seq[step++];
     var c = cells[idx];
     c.classList.add('open');
-    if (FORCE) c.classList.add('admin-hint');
+    if (FORCE && corners.indexOf(idx) >= 0) c.classList.add('admin-hint');
     c.innerHTML = STAR_SVG;
     tone(760 + step * 65, 0.10, 'triangle', 0.18);
     hapticLight();
@@ -593,7 +605,7 @@ function revealMulti(trapSet, safeSet) {
   next();
 }
 
-bindAction(playBtn, function () {
+function onPlay() {
   if (busy) return;
   busy = true;
   clearBoard();
@@ -620,9 +632,9 @@ bindAction(playBtn, function () {
       revealSingle(trapSet, safeSet);
     }
   });
-});
+}
 
-bindAction(backBtn, function () {
+function onBack() {
   if (busy) return;
   clearBoard();
   setStatus('idle');
@@ -631,7 +643,14 @@ bindAction(backBtn, function () {
   if (tg) {
     try { tg.close(); } catch (e) {}
   }
-});
+}
+
+bindAction(logoEl, onLogo);
+bindAction(switchBtn, onSwitchMode);
+bindAction(tMinusEl, onTrapsMinus);
+bindAction(tPlusEl, onTrapsPlus);
+bindAction(playBtnEl, onPlay);
+bindAction(backBtnEl, onBack);
 
 setStatus('idle');
 </script>
