@@ -118,44 +118,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.25s ease;
       position: relative;
       overflow: hidden;
     }
 
-    /* Открытая ячейка Cavemines: оранжевый объём и золотая звезда */
+    /* Ячейка при открытии звезды — сохраняет правильный тёмный фон игры */
     .cell.star {
-      background: radial-gradient(circle at 50% 30%, #ff8a00 0%, #e65100 70%, #993300 100%) !important;
-      border: 1.5px solid #ffb74d !important;
-      box-shadow: 0 0 20px rgba(255, 138, 0, 0.85), inset 0 2px 4px rgba(255, 255, 255, 0.4) !important;
-      transform: scale(1.04);
+      background: linear-gradient(145deg, #162e56, #0c1c38) !important;
+      border: 1px solid rgba(255, 170, 0, 0.5) !important;
+      box-shadow: inset 0 0 12px rgba(255, 140, 0, 0.25);
     }
 
-    .cell.star::before {
-      content: "";
-      position: absolute;
-      width: 68%;
-      height: 68%;
-      background: radial-gradient(circle at 40% 25%, #ffffff 0%, #fff3b0 30%, #ffd000 65%, #d48800 100%);
-      clip-path: polygon(
-        50% 0%,
-        63% 35%,
-        98% 35%,
-        70% 57%,
-        81% 91%,
-        50% 70%,
-        19% 91%,
-        30% 57%,
-        2% 35%,
-        37% 35%
-      );
-      filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5));
-      animation: star-pop 0.35s ease-out forwards;
+    .star-svg {
+      width: 80%;
+      height: 80%;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 140, 0, 0.8));
+      animation: star-appear 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
 
-    @keyframes star-pop {
-      0% { transform: scale(0.3); opacity: 0; }
-      70% { transform: scale(1.18); opacity: 1; }
+    @keyframes star-appear {
+      0% { transform: scale(0.2); opacity: 0; }
+      70% { transform: scale(1.15); opacity: 1; }
       100% { transform: scale(1); opacity: 1; }
     }
 
@@ -360,6 +344,41 @@
     const adminModal = document.getElementById('adminModal');
     const appLogo = document.getElementById('appLogo');
 
+    // 3D SVG звезда из Cavemines
+    const STAR_SVG = `
+      <svg class="star-svg" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="gradTop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fff4b8"/>
+            <stop offset="100%" stop-color="#ff9900"/>
+          </linearGradient>
+          <linearGradient id="gradRight" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffaa00"/>
+            <stop offset="100%" stop-color="#cc5500"/>
+          </linearGradient>
+          <linearGradient id="gradBottom" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ff7700"/>
+            <stop offset="100%" stop-color="#992b00"/>
+          </linearGradient>
+          <linearGradient id="gradLeft" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffd24d"/>
+            <stop offset="100%" stop-color="#e66000"/>
+          </linearGradient>
+        </defs>
+        <!-- Грани 3D звезды -->
+        <polygon points="50,5 50,52 64,36" fill="url(#gradTop)"/>
+        <polygon points="50,5 50,52 36,36" fill="url(#gradLeft)"/>
+        <polygon points="96,38 50,52 64,36" fill="url(#gradRight)"/>
+        <polygon points="96,38 50,52 71,59" fill="url(#gradBottom)"/>
+        <polygon points="79,92 50,52 71,59" fill="url(#gradBottom)"/>
+        <polygon points="79,92 50,52 50,75" fill="url(#gradBottom)"/>
+        <polygon points="21,92 50,52 50,75" fill="url(#gradBottom)"/>
+        <polygon points="21,92 50,52 29,59" fill="url(#gradBottom)"/>
+        <polygon points="4,38 50,52 29,59" fill="url(#gradLeft)"/>
+        <polygon points="4,38 50,52 36,36" fill="url(#gradLeft)"/>
+      </svg>
+    `;
+
     let mines = 3;
     let customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]');
 
@@ -390,7 +409,6 @@
       adminToggleBtn.style.display = 'block';
     }
 
-    // Секретный триггер по логотипу — ТОЛЬКО для владельца
     appLogo.addEventListener('click', () => {
       if (!isAdmin) return;
 
@@ -433,9 +451,8 @@
       if (mines < 7) { mines++; document.getElementById('minesCount').textContent = mines; }
     });
 
-    // Настройки плавности анимации
-    const FLASH_INTERVAL_MS = 130;
-    const FLASH_HIGHLIGHT_MS = 170;
+    const FLASH_INTERVAL_MS = 120;
+    const FLASH_HIGHLIGHT_MS = 160;
     const FLASH_COUNT = 14;
     const STAR_REVEAL_DELAY_MS = 450;
 
@@ -446,9 +463,10 @@
       statusText.textContent = 'Analisando algoritmo...';
       statusText.style.color = '#38bdf8';
 
-      // Полная очистка перед сканированием
+      // Очистка предыдущих звезд
       gridEl.querySelectorAll('.cell').forEach(c => {
         c.classList.remove('star');
+        c.innerHTML = '';
         c.style.background = '';
       });
 
@@ -478,9 +496,9 @@
     });
 
     function revealSignal() {
-      // 100% сброс зависших фонов перед выдачей звёзд
       gridEl.querySelectorAll('.cell').forEach(c => {
         c.classList.remove('star');
+        c.innerHTML = '';
         c.style.background = '';
       });
 
@@ -500,6 +518,7 @@
           const cell = gridEl.children[idx];
           cell.style.background = '';
           cell.classList.add('star');
+          cell.innerHTML = STAR_SVG;
         }, i * STAR_REVEAL_DELAY_MS);
       });
 
