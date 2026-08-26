@@ -118,29 +118,41 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.25s ease;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: relative;
       overflow: hidden;
     }
 
-    /* Ячейка при открытии звезды — сохраняет правильный тёмный фон игры */
+    /* Подсветка при сканировании алгоритма */
+    .cell.scan-highlight {
+      background: #00d4ff;
+      box-shadow: 0 0 14px rgba(0, 212, 255, 0.85);
+    }
+
+    /* Открытая выигрышная ячейка со звездой — тёмно-синий фон + внутренняя тень + золотая рамка */
     .cell.star {
-      background: linear-gradient(145deg, #162e56, #0c1c38) !important;
-      border: 1px solid rgba(255, 170, 0, 0.5) !important;
-      box-shadow: inset 0 0 12px rgba(255, 140, 0, 0.25);
+      background: radial-gradient(circle at 50% 5%, #243b68 0%, #182843 40%, #101a33 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        inset 0 0 10px rgba(0, 0, 0, 0.4),
+        0 10px 22px rgba(0, 0, 0, 0.7),
+        0 0 18px rgba(249, 115, 22, 0.75);
     }
 
-    .star-svg {
-      width: 80%;
-      height: 80%;
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 140, 0, 0.8));
-      animation: star-appear 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    .cell-star-svg {
+      width: 58px;
+      height: 58px;
+      filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55))
+              drop-shadow(0 0 18px rgba(249, 115, 22, 0.9));
+      animation: star-pop 0.45s ease-out;
+      pointer-events: none;
     }
 
-    @keyframes star-appear {
-      0% { transform: scale(0.2); opacity: 0; }
-      70% { transform: scale(1.15); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
+    @keyframes star-pop {
+      0%   { transform: scale(0.2); opacity: 0; }
+      55%  { transform: scale(1.18); opacity: 1; }
+      100% { transform: scale(1);    opacity: 1; }
     }
 
     /* Селектор мин */
@@ -320,11 +332,14 @@
   </div>
 
   <script>
+    // Telegram WebApp init
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
     if (tg) { tg.expand(); }
 
+    // Твой Telegram ID
     const OWNER_TELEGRAM_ID = 1733886157;
 
+    // Пытаемся безопасно получить user.id из initDataUnsafe
     let tgUserId = null;
     try {
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && typeof tg.initDataUnsafe.user.id === 'number') {
@@ -344,44 +359,10 @@
     const adminModal = document.getElementById('adminModal');
     const appLogo = document.getElementById('appLogo');
 
-    // 3D SVG звезда из Cavemines
-    const STAR_SVG = `
-      <svg class="star-svg" viewBox="0 0 100 100">
-        <defs>
-          <linearGradient id="gradTop" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fff4b8"/>
-            <stop offset="100%" stop-color="#ff9900"/>
-          </linearGradient>
-          <linearGradient id="gradRight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ffaa00"/>
-            <stop offset="100%" stop-color="#cc5500"/>
-          </linearGradient>
-          <linearGradient id="gradBottom" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#ff7700"/>
-            <stop offset="100%" stop-color="#992b00"/>
-          </linearGradient>
-          <linearGradient id="gradLeft" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#ffd24d"/>
-            <stop offset="100%" stop-color="#e66000"/>
-          </linearGradient>
-        </defs>
-        <!-- Грани 3D звезды -->
-        <polygon points="50,5 50,52 64,36" fill="url(#gradTop)"/>
-        <polygon points="50,5 50,52 36,36" fill="url(#gradLeft)"/>
-        <polygon points="96,38 50,52 64,36" fill="url(#gradRight)"/>
-        <polygon points="96,38 50,52 71,59" fill="url(#gradBottom)"/>
-        <polygon points="79,92 50,52 71,59" fill="url(#gradBottom)"/>
-        <polygon points="79,92 50,52 50,75" fill="url(#gradBottom)"/>
-        <polygon points="21,92 50,52 50,75" fill="url(#gradBottom)"/>
-        <polygon points="21,92 50,52 29,59" fill="url(#gradBottom)"/>
-        <polygon points="4,38 50,52 29,59" fill="url(#gradLeft)"/>
-        <polygon points="4,38 50,52 36,36" fill="url(#gradLeft)"/>
-      </svg>
-    `;
-
     let mines = 3;
     let customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]');
 
+    // Создание 25 ячеек
     for (let i = 0; i < 25; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -398,6 +379,7 @@
       adminGridEl.appendChild(aCell);
     }
 
+    // Секретный вход в админку + резервный доступ
     const urlParams = new URLSearchParams(window.location.search);
     const isAdminByParam = urlParams.get('admin') === 'dev77';
     const isAdmin = isOwner || isAdminByParam;
@@ -405,27 +387,48 @@
     let logoClicks = 0;
     let logoClickTimeout = null;
 
-    if (isAdminByParam) {
+    function showAdminBtn() {
       adminToggleBtn.style.display = 'block';
     }
 
-    appLogo.addEventListener('click', () => {
-      if (!isAdmin) return;
+    // Резервный доступ по GET-параметру (?admin=dev77)
+    if (isAdminByParam) {
+      showAdminBtn();
+    }
 
-      logoClicks++;
-      if (logoClickTimeout) clearTimeout(logoClickTimeout);
-      logoClickTimeout = setTimeout(() => {
-        logoClicks = 0;
-      }, 2000);
+    // Логотип как секретный триггер — ТОЛЬКО для владельца
+    if (isOwner) {
+      appLogo.style.cursor = 'pointer';
+      appLogo.addEventListener('click', () => {
+        logoClicks++;
 
-      if (logoClicks >= 5) {
-        logoClicks = 0;
-        adminToggleBtn.style.display = (adminToggleBtn.style.display === 'block') ? 'none' : 'block';
-      }
-    });
+        if (logoClickTimeout) {
+          clearTimeout(logoClickTimeout);
+        }
+        // Окно 2 секунды на серию из 5 кликов
+        logoClickTimeout = setTimeout(() => {
+          logoClicks = 0;
+        }, 2000);
+
+        if (logoClicks >= 5) {
+          logoClicks = 0;
+          if (adminToggleBtn.style.display === 'block') {
+            adminToggleBtn.style.display = 'none';
+          } else {
+            adminToggleBtn.style.display = 'block';
+          }
+        }
+      });
+    } else {
+      // Для остальных пользователей клики по логотипу НЕ делают ничего
+      appLogo.style.cursor = 'default';
+      appLogo.addEventListener('click', () => {
+        // намеренно пусто
+      });
+    }
 
     adminToggleBtn.addEventListener('click', () => {
-      if (!isAdmin) return;
+      if (!isAdmin) return; // дополнительная защита
       adminModal.style.display = 'flex';
     });
 
@@ -444,6 +447,7 @@
       adminModal.style.display = 'none';
     });
 
+    // Мины +/-
     document.getElementById('btnMinus').addEventListener('click', () => {
       if (mines > 1) { mines--; document.getElementById('minesCount').textContent = mines; }
     });
@@ -451,40 +455,92 @@
       if (mines < 7) { mines++; document.getElementById('minesCount').textContent = mines; }
     });
 
-    const FLASH_INTERVAL_MS = 120;
-    const FLASH_HIGHLIGHT_MS = 160;
-    const FLASH_COUNT = 14;
-    const STAR_REVEAL_DELAY_MS = 450;
+    // Параметры анимации
+    const FLASH_INTERVAL_MS = 140;       // интервал мерцания при анализе
+    const FLASH_HIGHLIGHT_MS = 180;      // длительность подсветки клетки
+    const FLASH_COUNT = 15;              // количество "мерцаний"
+    const STAR_REVEAL_DELAY_MS = 450;    // пауза между появлением каждой звезды
 
-    let flashInterval = null;
+    // Создание SVG-звезды с уникальным градиентом для каждой ячейки
+    function createStarSvg(index) {
+      const svgNS = "http://www.w3.org/2000/svg";
+      const gradientId = `cellStarGradient_${index}`;
 
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.setAttribute("class", "cell-star-svg");
+
+      const defs = document.createElementNS(svgNS, "defs");
+      const grad = document.createElementNS(svgNS, "linearGradient");
+      grad.setAttribute("id", gradientId);
+      grad.setAttribute("x1", "30%");
+      grad.setAttribute("y1", "0%");
+      grad.setAttribute("x2", "70%");
+      grad.setAttribute("y2", "100%");
+
+      const stop1 = document.createElementNS(svgNS, "stop");
+      stop1.setAttribute("offset", "0%");
+      stop1.setAttribute("stop-color", "#ffe9b3");
+
+      const stop2 = document.createElementNS(svgNS, "stop");
+      stop2.setAttribute("offset", "40%");
+      stop2.setAttribute("stop-color", "#ffd367");
+
+      const stop3 = document.createElementNS(svgNS, "stop");
+      stop3.setAttribute("offset", "75%");
+      stop3.setAttribute("stop-color", "#ffad35");
+
+      const stop4 = document.createElementNS(svgNS, "stop");
+      stop4.setAttribute("offset", "100%");
+      stop4.setAttribute("stop-color", "#f58a16");
+
+      grad.appendChild(stop1);
+      grad.appendChild(stop2);
+      grad.appendChild(stop3);
+      grad.appendChild(stop4);
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+
+      const star = document.createElementNS(svgNS, "polygon");
+      star.setAttribute(
+        "points",
+        "50 8, 63 34, 92 37, 71 56, 78 86, 50 72, 22 86, 29 56, 8 37, 37 34"
+      );
+      star.setAttribute("fill", `url(#${gradientId})`);
+      star.setAttribute("stroke", "#b45309");
+      star.setAttribute("stroke-width", "2");
+      star.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(star);
+
+      return svg;
+    }
+
+    // Генерация сигнала
     btnGenerate.addEventListener('click', () => {
       btnGenerate.disabled = true;
       statusText.textContent = 'Analisando algoritmo...';
       statusText.style.color = '#38bdf8';
 
-      // Очистка предыдущих звезд
+      // Очистка предыдущих звезд, SVG и подсветок
       gridEl.querySelectorAll('.cell').forEach(c => {
         c.classList.remove('star');
+        c.classList.remove('scan-highlight');
         c.innerHTML = '';
         c.style.background = '';
       });
 
+      // Анимация поиска — более плавная и выразительная
       let flashes = 0;
-      if (flashInterval) clearInterval(flashInterval);
-
-      flashInterval = setInterval(() => {
+      const flashInterval = setInterval(() => {
         const randIndex = Math.floor(Math.random() * 25);
         const cell = gridEl.children[randIndex];
 
-        if (!cell.classList.contains('star')) {
-          cell.style.background = '#00d4ff';
-          setTimeout(() => {
-            if (!cell.classList.contains('star')) {
-              cell.style.background = '';
-            }
-          }, FLASH_HIGHLIGHT_MS);
-        }
+        cell.classList.add('scan-highlight');
+
+        setTimeout(() => {
+          cell.classList.remove('scan-highlight');
+          cell.style.background = '';
+        }, FLASH_HIGHLIGHT_MS);
 
         flashes++;
 
@@ -496,14 +552,9 @@
     });
 
     function revealSignal() {
-      gridEl.querySelectorAll('.cell').forEach(c => {
-        c.classList.remove('star');
-        c.innerHTML = '';
-        c.style.background = '';
-      });
-
       let targets = [];
 
+      // Если админ выбрал ячейки — используем их, иначе случайные
       if (customStars.length > 0) {
         targets = [...customStars];
       } else {
@@ -516,9 +567,9 @@
       targets.forEach((idx, i) => {
         setTimeout(() => {
           const cell = gridEl.children[idx];
-          cell.style.background = '';
           cell.classList.add('star');
-          cell.innerHTML = STAR_SVG;
+          cell.innerHTML = '';
+          cell.appendChild(createStarSvg(idx));
         }, i * STAR_REVEAL_DELAY_MS);
       });
 
@@ -526,7 +577,7 @@
         statusText.textContent = 'Sinal Confirmado!';
         statusText.style.color = '#22c55e';
         btnGenerate.disabled = false;
-      }, targets.length * STAR_REVEAL_DELAY_MS + 350);
+      }, targets.length * STAR_REVEAL_DELAY_MS + 400);
     }
   </script>
 </body>
