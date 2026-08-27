@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Mines — Sinais IA</title>
+  <title>Mines — Sinais</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * {
@@ -16,7 +16,8 @@
     }
 
     body {
-      background: #0a1122;
+      /* Темно-синий фон под оригинал */
+      background: #0e1628; 
       color: #ffffff;
       min-height: 100vh;
       display: flex;
@@ -33,16 +34,17 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
-    /* Верхняя панель */
+    /* ШАПКА */
     .header {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0 4px;
+      margin-bottom: 4px;
     }
 
     .logo {
@@ -50,60 +52,56 @@
       font-weight: 900;
       font-style: italic;
       color: #ffffff;
-      text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 20px rgba(0, 170, 255, 0.6);
+      letter-spacing: -1px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
       cursor: pointer;
     }
 
-    /* Кнопка переключения режимов в шапке */
     .mode-btn {
-      background: #00aaff;
-      color: #fff;
+      background: #00bfff;
+      color: #ffffff;
       border: none;
-      border-radius: 12px;
-      padding: 8px 14px;
+      border-radius: 8px;
+      padding: 8px 12px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 170, 255, 0.4);
-      transition: all 0.2s;
+      box-shadow: 0 3px 10px rgba(0, 191, 255, 0.3);
+      transition: transform 0.1s;
     }
-    .mode-btn:active {
-      transform: scale(0.95);
-    }
+    .mode-btn:active { transform: scale(0.95); }
 
-    /* Статус бар */
+    /* СТАТУС БАР */
     .status-bar {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 14px;
       font-weight: 800;
-      color: #22c55e;
+      color: #00ff00;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-
     .status-dot {
       width: 10px;
       height: 10px;
-      background: #22c55e;
+      background: #00ff00;
       border-radius: 50%;
-      box-shadow: 0 0 10px #22c55e;
+      box-shadow: 0 0 8px #00ff00;
       animation: pulse 1.5s infinite;
     }
-
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    /* Игровая доска */
+    /* ИГРОВАЯ ДОСКА */
     .grid-wrapper {
       position: relative;
-      background: #0d172a; /* Темный фон доски */
-      border: 1.5px solid #006699;
-      box-shadow: 0 0 20px rgba(0, 150, 255, 0.2);
-      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 2px solid #00bfff; /* Яркая синяя рамка */
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+      border-radius: 16px;
       padding: 10px;
       width: 100%;
       aspect-ratio: 1;
@@ -118,38 +116,40 @@
       height: 100%;
     }
 
-    /* ЗАКРЫТАЯ ЯЧЕЙКА - бирюзово-голубой градиент */
+    /* ЗАКРЫТАЯ ЯЧЕЙКА - яркая бирюзовая как в оригинале! */
     .cell {
-      background: linear-gradient(145deg, #0294b5, #00566e);
-      border-radius: 10px;
-      border: 1px solid rgba(0, 220, 255, 0.4);
+      background: linear-gradient(180deg, #1ad1ff, #008be6);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease-out;
       position: relative;
       overflow: hidden;
-      box-shadow: inset 0 3px 5px rgba(255, 255, 255, 0.25), 0 4px 6px rgba(0, 0, 0, 0.3);
+      box-shadow: 
+        inset 0 3px 5px rgba(255, 255, 255, 0.4), 
+        inset 0 -3px 6px rgba(0, 0, 0, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease-out;
     }
 
     .cell.scan-highlight {
-      background: #00d4ff !important;
-      box-shadow: 0 0 16px rgba(0, 212, 255, 0.9) !important;
-      border-color: #ffffff !important;
+      background: #66e0ff !important;
+      box-shadow: 0 0 15px #66e0ff !important;
     }
 
-    /* ОТКРЫТАЯ ЯЧЕЙКА СО ЗВЕЗДОЙ - сливается с фоном доски */
+    /* ОТКРЫТАЯ ЯЧЕЙКА СО ЗВЕЗДОЙ - сливается с темным фоном */
     .cell.star {
-      background: #0b1325 !important; 
-      border: 1px solid rgba(255, 255, 255, 0.03) !important;
-      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.7) !important;
+      background: #080f1c !important;
+      border: none !important;
+      box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* ИДЕАЛЬНАЯ ГЛАДКАЯ ЗВЕЗДА */
+    /* ИДЕАЛЬНАЯ ГЛАДКАЯ ЗВЕЗДА БЕЗ ВНУТРЕННИХ ЛИНИЙ */
     .cell-star-svg {
-      width: 72%;
-      height: 72%;
-      filter: drop-shadow(0 0 12px rgba(255, 136, 0, 0.7));
+      width: 75%;
+      height: 75%;
+      filter: drop-shadow(0 0 10px rgba(255, 150, 0, 0.8));
       animation: star-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       pointer-events: none;
     }
@@ -160,54 +160,78 @@
       100% { transform: scale(1); opacity: 1; }
     }
 
-    /* Нижняя панель управления */
+    /* НИЖНЯЯ ПАНЕЛЬ С МИНАМИ */
     .mines-counter {
-      background: rgba(13, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #111a2e;
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 10px 18px;
-      font-weight: 800;
-      font-size: 15px;
+      padding: 10px 16px;
     }
 
     .counter-btn {
-      background: rgba(0, 170, 255, 0.1);
-      border: 1px solid rgba(0, 170, 255, 0.3);
-      color: #00aaff;
+      background: #00bfff;
+      color: #fff;
+      border: none;
       border-radius: 8px;
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
       font-weight: 900;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 191, 255, 0.3);
     }
-    .counter-btn:active { background: rgba(0, 170, 255, 0.3); }
+    .counter-btn:active { transform: scale(0.95); }
 
-    .btn-main {
+    .mines-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .mines-val { font-size: 16px; font-weight: 900; }
+    .mines-label { font-size: 10px; color: #8892a3; font-weight: 700; margin-top: 2px; }
+
+    /* КНОПКИ PLAY И BACK */
+    .btn-play {
       width: 100%;
-      background: #00aaff;
+      background: linear-gradient(180deg, #00e5ff, #0099ff);
       border: none;
       border-radius: 14px;
       color: #ffffff;
       font-size: 18px;
       font-weight: 900;
-      padding: 16px;
-      letter-spacing: 1px;
+      padding: 15px;
+      text-transform: uppercase;
       cursor: pointer;
-      box-shadow: 0 6px 15px rgba(0, 170, 255, 0.3);
+      box-shadow: 0 5px 15px rgba(0, 153, 255, 0.4);
       transition: transform 0.1s;
     }
-    .btn-main:active { transform: scale(0.98); }
-    .btn-main:disabled { filter: grayscale(1); cursor: not-allowed; }
+    .btn-play:active { transform: scale(0.97); }
+    .btn-play:disabled { filter: grayscale(1); cursor: not-allowed; }
 
-    /* Админка */
+    .btn-back {
+      width: 100%;
+      background: linear-gradient(180deg, #ff5555, #cc0000);
+      border: none;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 12px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(204, 0, 0, 0.4);
+      transition: transform 0.1s;
+    }
+    .btn-back:active { transform: scale(0.97); }
+
+    /* АДМИНКА */
     #adminToggleBtn {
       display: none;
       position: fixed;
@@ -224,7 +248,6 @@
       cursor: pointer;
       z-index: 999;
     }
-
     .modal-overlay {
       display: none;
       position: fixed;
@@ -235,10 +258,9 @@
       justify-content: center;
       padding: 16px;
     }
-
     .modal-content {
-      background: #0d172a;
-      border: 1px solid #00aaff;
+      background: #0e1628;
+      border: 1px solid #00bfff;
       border-radius: 18px;
       padding: 16px;
       width: 100%;
@@ -247,28 +269,13 @@
       flex-direction: column;
       gap: 12px;
     }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-    }
-
+    .admin-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
     .admin-cell {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: 8px;
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+      background: #1e293b; border: 1px solid #334155; color: #fff; font-size: 12px;
+      font-weight: 700; border-radius: 8px; aspect-ratio: 1; display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
     }
     .admin-cell.selected { background: #22c55e; color: #000; border-color: #4ade80; }
-
     .modal-actions { display: flex; gap: 8px; }
     .modal-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
     .btn-save { background: #22c55e; color: #000; }
@@ -276,6 +283,18 @@
   </style>
 </head>
 <body>
+
+  <!-- Глобальный градиент для звёзд (чтобы не было багов с отображением) -->
+  <svg width="0" height="0" style="position: absolute;">
+    <defs>
+      <radialGradient id="starGradient" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#fff5cc" />
+        <stop offset="35%" stop-color="#ffb700" />
+        <stop offset="75%" stop-color="#ff6600" />
+        <stop offset="100%" stop-color="#b32400" />
+      </radialGradient>
+    </defs>
+  </svg>
 
   <div class="container">
     <div class="header">
@@ -294,11 +313,15 @@
 
     <div class="mines-counter">
       <button class="counter-btn" id="btnMinus">−</button>
-      <span><span id="minesCount">3</span> MINAS</span>
+      <div class="mines-text">
+        <span class="mines-val"><span id="minesCount">5</span> MINAS</span>
+        <span class="mines-label">TRAPS COUNT</span>
+      </div>
       <button class="counter-btn" id="btnPlus">+</button>
     </div>
 
-    <button class="btn-main" id="btnGenerate">GERAR SINAL</button>
+    <button class="btn-play" id="btnPlay">PLAY</button>
+    <button class="btn-back" id="btnBack">BACK</button>
   </div>
 
   <!-- Админ панель -->
@@ -306,7 +329,7 @@
 
   <div class="modal-overlay" id="adminModal">
     <div class="modal-content">
-      <h3 style="font-size: 15px; text-align: center; color: white;">Выбери ячейки</h3>
+      <h3 style="font-size: 15px; text-align: center; color: white;">Выбор ячеек</h3>
       <div class="admin-grid" id="adminGrid"></div>
       <div class="modal-actions">
         <button class="modal-btn btn-reset" id="btnAdminReset">Сброс</button>
@@ -319,11 +342,9 @@
     (function() {
       'use strict';
 
-      // Инициализация Telegram WebApp
       var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
       if (tg) { try { tg.expand(); } catch(e){} }
 
-      // Безопасность
       var OWNER_TELEGRAM_ID = 1733886157;
       var tgUserId = null;
       try {
@@ -335,25 +356,24 @@
       var urlParams = new URLSearchParams(window.location.search);
       var isAdmin = (tgUserId === OWNER_TELEGRAM_ID) || (urlParams.get('admin') === 'dev77');
 
-      // Элементы DOM
       var gridEl = document.getElementById('gameGrid');
       var adminGridEl = document.getElementById('adminGrid');
       var statusText = document.getElementById('statusText');
       var statusDot = document.getElementById('statusDot');
-      var btnGenerate = document.getElementById('btnGenerate');
+      var btnPlay = document.getElementById('btnPlay');
+      var btnBack = document.getElementById('btnBack');
       var modeToggleBtn = document.getElementById('modeToggleBtn');
       var appLogo = document.getElementById('appLogo');
       var adminToggleBtn = document.getElementById('adminToggleBtn');
       var adminModal = document.getElementById('adminModal');
       var minesCountEl = document.getElementById('minesCount');
 
-      // Переменные логики
-      var mines = 3;
+      var mines = 5; // По умолчанию 5, как на скрине
       var isSingleMode = false;
       var customStars = [];
       try { customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]'); } catch(e){}
 
-      // Переключение режима Single/Multiple
+      // Переключатель режима
       modeToggleBtn.addEventListener('click', function() {
         isSingleMode = !isSingleMode;
         if (isSingleMode) {
@@ -363,7 +383,7 @@
         }
       });
 
-      // Сборка 25 ячеек
+      // Инициализация сетки
       for (var i = 0; i < 25; i++) {
         var cell = document.createElement('div');
         cell.className = 'cell';
@@ -377,7 +397,7 @@
         adminGridEl.appendChild(aCell);
       }
 
-      // Админ-панель (5 кликов)
+      // Защита админки (5 кликов)
       if (urlParams.get('admin') === 'dev77') adminToggleBtn.style.display = 'block';
       
       var logoClicks = 0, logoTimeout;
@@ -408,54 +428,53 @@
         adminModal.style.display = 'none';
       });
 
-      // Мины +/-
+      // Изменение количества мин
       document.getElementById('btnMinus').addEventListener('click', function() {
         if (mines > 1) { mines--; minesCountEl.textContent = mines; }
       });
       document.getElementById('btnPlus').addEventListener('click', function() {
-        if (mines < 7) { mines++; minesCountEl.textContent = mines; }
+        if (mines < 24) { mines++; minesCountEl.textContent = mines; }
       });
 
-      // ИДЕАЛЬНАЯ ГЛАДКАЯ ЗВЕЗДА БЕЗ ВНУТРЕННИХ ЛИНИЙ
-      function createStarSvg(index) {
-        var gradId = 'starGrad_' + index;
-        var svg = document.createElement('div');
-        svg.innerHTML = 
-          '<svg viewBox="0 0 100 100" class="cell-star-svg" xmlns="http://www.w3.org/2000/svg">' +
-            '<defs>' +
-              // Линейный градиент по диагонали (сверху-слева направо-вниз)
-              '<linearGradient id="' + gradId + '" x1="20%" y1="0%" x2="80%" y2="100%">' +
-                '<stop offset="0%" stop-color="#ffe49e"/>' +
-                '<stop offset="40%" stop-color="#ff9500"/>' +
-                '<stop offset="80%" stop-color="#e64a00"/>' +
-                '<stop offset="100%" stop-color="#b32d00"/>' +
-              '</linearGradient>' +
-            '</defs>' +
-            // Цельный сглаженный полигон (round) без швов внутри
-            '<polygon points="50,6 64,34 94,36 71,56 78,86 50,71 22,86 29,56 6,36 36,34" ' +
-                     'fill="url(#' + gradId + ')" ' +
-                     'stroke="#7a1f00" ' +
-                     'stroke-width="1.5" ' +
-                     'stroke-linejoin="round"/>' +
-          '</svg>';
-        return svg.firstChild;
-      }
-
-      // Генерация сигнала
-      btnGenerate.addEventListener('click', function() {
-        btnGenerate.disabled = true;
-        statusText.textContent = 'ANALISANDO...';
-        statusText.style.color = '#00aaff';
-        statusDot.style.background = '#00aaff';
-        statusDot.style.boxShadow = '0 0 10px #00aaff';
-
+      // Функция сброса доски (Кнопка BACK)
+      function resetBoard() {
         var cells = gridEl.children;
         for (var i = 0; i < cells.length; i++) {
           cells[i].classList.remove('star', 'scan-highlight');
           cells[i].innerHTML = '';
         }
+        statusText.textContent = 'SINAL PRONTO ✅';
+        statusText.style.color = '#00ff00';
+        statusDot.style.background = '#00ff00';
+        statusDot.style.boxShadow = '0 0 8px #00ff00';
+      }
+
+      btnBack.addEventListener('click', resetBoard);
+
+      // Рисуем звезду, ссылаясь на глобальный идеальный градиент
+      function getStarSvg() {
+        return '<svg viewBox="0 0 100 100" class="cell-star-svg">' +
+                 '<polygon points="50,10 61,38 91,38 67,56 76,85 50,67 24,85 33,56 9,38 39,38" ' +
+                          'fill="url(#starGradient)" ' +
+                          'stroke="#8a2700" ' +
+                          'stroke-width="2" ' +
+                          'stroke-linejoin="round"/>' +
+               '</svg>';
+      }
+
+      // Генерация сигнала (Кнопка PLAY)
+      btnPlay.addEventListener('click', function() {
+        btnPlay.disabled = true;
+        statusText.textContent = 'ANALISANDO...';
+        statusText.style.color = '#00bfff';
+        statusDot.style.background = '#00bfff';
+        statusDot.style.boxShadow = '0 0 10px #00bfff';
+
+        resetBoard();
 
         var flashes = 0;
+        var cells = gridEl.children;
+        
         var flashInterval = setInterval(function() {
           var randIdx = Math.floor(Math.random() * 25);
           cells[randIdx].classList.add('scan-highlight');
@@ -466,7 +485,7 @@
             clearInterval(flashInterval);
             reveal();
           }
-        }, 140);
+        }, 120);
       });
 
       function reveal() {
@@ -475,8 +494,10 @@
         if (customStars.length > 0) {
           targets = customStars.slice();
         } else {
-          // Если Single Mode - строго 1 звезда, иначе формула
-          var count = isSingleMode ? 1 : Math.max(3, 6 - mines);
+          // В Single режиме - 1 звезда. В Multiple - считаем от количества мин.
+          var count = isSingleMode ? 1 : Math.max(3, Math.floor((25 - mines) / 3));
+          if (count < 1) count = 1;
+
           var indices = [];
           for (var i = 0; i < 25; i++) indices.push(i);
           indices.sort(function() { return Math.random() - 0.5; });
@@ -489,17 +510,17 @@
             setTimeout(function() {
               var cell = gridEl.children[idx];
               cell.classList.add('star');
-              cell.appendChild(createStarSvg(idx));
+              cell.innerHTML = getStarSvg();
             }, time);
           })(targets[k], k * delay);
         }
 
         setTimeout(function() {
-          statusText.textContent = 'SINAL PRONTO ✅';
-          statusText.style.color = '#22c55e';
-          statusDot.style.background = '#22c55e';
-          statusDot.style.boxShadow = '0 0 10px #22c55e';
-          btnGenerate.disabled = false;
+          statusText.textContent = 'SINAL CONFIRMADO ✅';
+          statusText.style.color = '#00ff00';
+          statusDot.style.background = '#00ff00';
+          statusDot.style.boxShadow = '0 0 8px #00ff00';
+          btnPlay.disabled = false;
         }, targets.length * delay + 300);
       }
 
