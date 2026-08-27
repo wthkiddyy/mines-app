@@ -466,9 +466,9 @@
     const STAR_REVEAL_DELAY_MS = 450;    // пауза между появлением каждой звезды
 
     /**
-     * Создаёт объёмную 3D-звезду строго из 10 треугольных граней,
-     * сходящихся в центре (50,50). Никаких эллипсов/бликов —
-     * объём достигается только геометрией граней и цветом света/тени.
+     * Создаёт гладкую "пухлую" пятиконечную звезду одним контуром (path)
+     * со сглаженными округлыми лучами через кубические кривые Безье
+     * (без внутренних граней, треугольников и швов).
      */
     function createStarSvg(index) {
       const svgNS = "http://www.w3.org/2000/svg";
@@ -477,81 +477,75 @@
       svg.setAttribute("class", "cell-star-svg");
 
       const defs = document.createElementNS(svgNS, "defs");
+      const gradientId = `starGrad_${index}`;
+      const grad = document.createElementNS(svgNS, "radialGradient");
+      grad.setAttribute("id", gradientId);
+      grad.setAttribute("cx", "38%");
+      grad.setAttribute("cy", "32%");
+      grad.setAttribute("r", "75%");
+
+      const stop1 = document.createElementNS(svgNS, "stop");
+      stop1.setAttribute("offset", "0%");
+      stop1.setAttribute("stop-color", "#ffe8a3");
+
+      const stop2 = document.createElementNS(svgNS, "stop");
+      stop2.setAttribute("offset", "45%");
+      stop2.setAttribute("stop-color", "#ff9a3c");
+
+      const stop3 = document.createElementNS(svgNS, "stop");
+      stop3.setAttribute("offset", "100%");
+      stop3.setAttribute("stop-color", "#e65100");
+
+      grad.appendChild(stop1);
+      grad.appendChild(stop2);
+      grad.appendChild(stop3);
+      defs.appendChild(grad);
       svg.appendChild(defs);
 
       const cx = 50, cy = 50;
       const outerR = 44;
-      const innerR = 21;
-      const points = [];
+      const innerR = 19;
+      const pts = [];
 
-      // 10 вершин: чередование внешних (кончики лучей) и внутренних (впадины)
+      // 10 базовых точек: чередование внешних вершин и внутренних впадин
       for (let k = 0; k < 5; k++) {
-        const outerAngleDeg = -90 + k * 72;
-        const innerAngleDeg = outerAngleDeg + 36;
-
-        const outerAngleRad = (Math.PI / 180) * outerAngleDeg;
-        const innerAngleRad = (Math.PI / 180) * innerAngleDeg;
-
-        points.push({
-          x: cx + outerR * Math.cos(outerAngleRad),
-          y: cy + outerR * Math.sin(outerAngleRad)
-        });
-        points.push({
-          x: cx + innerR * Math.cos(innerAngleRad),
-          y: cy + innerR * Math.sin(innerAngleRad)
-        });
+        const outerAngle = (-90 + k * 72) * Math.PI / 180;
+        const innerAngle = (-90 + k * 72 + 36) * Math.PI / 180;
+        pts.push({ x: cx + outerR * Math.cos(outerAngle), y: cy + outerR * Math.sin(outerAngle) });
+        pts.push({ x: cx + innerR * Math.cos(innerAngle), y: cy + innerR * Math.sin(innerAngle) });
       }
 
-      // Ровно 10 треугольных граней: (центр, точка j, точка j+1)
-      for (let j = 0; j < points.length; j++) {
-        const p1 = points[j];
-        const p2 = points[(j + 1) % points.length];
+      // Сглаживание Catmull-Rom -> Bezier для получения "пухлого" контура
+      const n = pts.length;
+      const smoothing = 0.55; // сила округления углов
+      let d = "";
 
-        const gradientId = `starGrad_${index}_facet_${j}`;
-        const grad = document.createElementNS(svgNS, "linearGradient");
-        grad.setAttribute("id", gradientId);
-        grad.setAttribute("x1", "0%");
-        grad.setAttribute("y1", "0%");
-        grad.setAttribute("x2", "100%");
-        grad.setAttribute("y2", "100%");
+      for (let i = 0; i < n; i++) {
+        const p0 = pts[(i - 1 + n) % n];
+        const p1 = pts[i];
+        const p2 = pts[(i + 1) % n];
+        const p3 = pts[(i + 2) % n];
 
-        const avgX = (p1.x + p2.x) / 2;
-        const avgY = (p1.y + p2.y) / 2;
-        // Свет "слева-сверху": грани, смещённые к верхнему левому диагональному
-        // квадранту относительно центра, считаются освещёнными.
-        const isLitFacet = (avgX + avgY) < (cx + cy);
+        const cp1x = p1.x + (p2.x - p0.x) / 6 * smoothing;
+        const cp1y = p1.y + (p2.y - p0.y) / 6 * smoothing;
+        const cp2x = p2.x - (p3.x - p1.x) / 6 * smoothing;
+        const cp2y = p2.y - (p3.y - p1.y) / 6 * smoothing;
 
-        const stop1 = document.createElementNS(svgNS, "stop");
-        const stop2 = document.createElementNS(svgNS, "stop");
-
-        if (isLitFacet) {
-          stop1.setAttribute("offset", "0%");
-          stop1.setAttribute("stop-color", "#ffe899");
-          stop2.setAttribute("offset", "100%");
-          stop2.setAttribute("stop-color", "#ffa000");
-        } else {
-          stop1.setAttribute("offset", "0%");
-          stop1.setAttribute("stop-color", "#e65c00");
-          stop2.setAttribute("offset", "100%");
-          stop2.setAttribute("stop-color", "#992b00");
+        if (i === 0) {
+          d += `M ${p1.x.toFixed(2)},${p1.y.toFixed(2)} `;
         }
-
-        grad.appendChild(stop1);
-        grad.appendChild(stop2);
-        defs.appendChild(grad);
-
-        const facet = document.createElementNS(svgNS, "polygon");
-        facet.setAttribute(
-          "points",
-          `${cx},${cy} ${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`
-        );
-        facet.setAttribute("fill", `url(#${gradientId})`);
-        facet.setAttribute("stroke", "#661a00");
-        facet.setAttribute("stroke-width", "0.8");
-        facet.setAttribute("stroke-linejoin", "round");
-
-        svg.appendChild(facet);
+        d += `C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} `;
       }
+      d += "Z";
+
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", `url(#${gradientId})`);
+      path.setAttribute("stroke", "#b33000");
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("stroke-linecap", "round");
+      svg.appendChild(path);
 
       return svg;
     }
