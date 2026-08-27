@@ -466,88 +466,34 @@
     const STAR_REVEAL_DELAY_MS = 450;    // пауза между появлением каждой звезды
 
     /**
-     * Создаёт гладкую "пухлую" пятиконечную звезду одним контуром (path)
-     * со сглаженными округлыми лучами через кубические кривые Безье
-     * (без внутренних граней, треугольников и швов).
+     * Создаёт цельную гладкую пятиконечную звезду единым polygon
+     * без внутренних линий, швов или отдельных граней.
      */
     function createStarSvg(index) {
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("viewBox", "0 0 100 100");
-      svg.setAttribute("class", "cell-star-svg");
+      const gradId = `starRadial_${index}`;
+      const pts = "50,10 62,35 90,37 68,57 74,84 50,69 26,84 32,57 10,37 38,35";
 
-      const defs = document.createElementNS(svgNS, "defs");
-      const gradientId = `starGrad_${index}`;
-      const grad = document.createElementNS(svgNS, "radialGradient");
-      grad.setAttribute("id", gradientId);
-      grad.setAttribute("cx", "38%");
-      grad.setAttribute("cy", "32%");
-      grad.setAttribute("r", "75%");
-
-      const stop1 = document.createElementNS(svgNS, "stop");
-      stop1.setAttribute("offset", "0%");
-      stop1.setAttribute("stop-color", "#ffe8a3");
-
-      const stop2 = document.createElementNS(svgNS, "stop");
-      stop2.setAttribute("offset", "45%");
-      stop2.setAttribute("stop-color", "#ff9a3c");
-
-      const stop3 = document.createElementNS(svgNS, "stop");
-      stop3.setAttribute("offset", "100%");
-      stop3.setAttribute("stop-color", "#e65100");
-
-      grad.appendChild(stop1);
-      grad.appendChild(stop2);
-      grad.appendChild(stop3);
-      defs.appendChild(grad);
-      svg.appendChild(defs);
-
-      const cx = 50, cy = 50;
-      const outerR = 44;
-      const innerR = 19;
-      const pts = [];
-
-      // 10 базовых точек: чередование внешних вершин и внутренних впадин
-      for (let k = 0; k < 5; k++) {
-        const outerAngle = (-90 + k * 72) * Math.PI / 180;
-        const innerAngle = (-90 + k * 72 + 36) * Math.PI / 180;
-        pts.push({ x: cx + outerR * Math.cos(outerAngle), y: cy + outerR * Math.sin(outerAngle) });
-        pts.push({ x: cx + innerR * Math.cos(innerAngle), y: cy + innerR * Math.sin(innerAngle) });
-      }
-
-      // Сглаживание Catmull-Rom -> Bezier для получения "пухлого" контура
-      const n = pts.length;
-      const smoothing = 0.55; // сила округления углов
-      let d = "";
-
-      for (let i = 0; i < n; i++) {
-        const p0 = pts[(i - 1 + n) % n];
-        const p1 = pts[i];
-        const p2 = pts[(i + 1) % n];
-        const p3 = pts[(i + 2) % n];
-
-        const cp1x = p1.x + (p2.x - p0.x) / 6 * smoothing;
-        const cp1y = p1.y + (p2.y - p0.y) / 6 * smoothing;
-        const cp2x = p2.x - (p3.x - p1.x) / 6 * smoothing;
-        const cp2y = p2.y - (p3.y - p1.y) / 6 * smoothing;
-
-        if (i === 0) {
-          d += `M ${p1.x.toFixed(2)},${p1.y.toFixed(2)} `;
-        }
-        d += `C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} `;
-      }
-      d += "Z";
-
-      const path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", d);
-      path.setAttribute("fill", `url(#${gradientId})`);
-      path.setAttribute("stroke", "#b33000");
-      path.setAttribute("stroke-width", "2.5");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("stroke-linecap", "round");
-      svg.appendChild(path);
-
-      return svg;
+      const svg = `
+        <svg viewBox="0 0 100 100" class="cell-star-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="${gradId}" cx="50%" cy="42%" r="55%">
+              <stop offset="0%" stop-color="#fff4cc" />
+              <stop offset="35%" stop-color="#ffb142" />
+              <stop offset="80%" stop-color="#ff793f" />
+              <stop offset="100%" stop-color="#d35400" />
+            </radialGradient>
+          </defs>
+          <!-- Единая цельная форма: мягкий контур + радиальный свет внутри -->
+          <polygon points="${pts}" 
+                   fill="url(#${gradId})" 
+                   stroke="#b33939" 
+                   stroke-width="5" 
+                   stroke-linejoin="round" />
+        </svg>
+      `;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = svg.trim();
+      return wrap.firstChild;
     }
 
     // Генерация сигнала
