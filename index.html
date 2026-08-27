@@ -16,8 +16,7 @@
     }
 
     body {
-      /* Темно-синий фон под оригинал */
-      background: #0e1628; 
+      background: #0a1122; 
       color: #ffffff;
       min-height: 100vh;
       display: flex;
@@ -57,19 +56,19 @@
       cursor: pointer;
     }
 
+    /* КНОПКА ПЕРЕКЛЮЧЕНИЯ РЕЖИМА */
     .mode-btn {
-      background: #00bfff;
+      background: rgba(255, 255, 255, 0.08);
       color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 3px 10px rgba(0, 191, 255, 0.3);
-      transition: transform 0.1s;
+      transition: background 0.2s;
     }
-    .mode-btn:active { transform: scale(0.95); }
+    .mode-btn:active { background: rgba(255, 255, 255, 0.25); }
 
     /* СТАТУС БАР */
     .status-bar {
@@ -99,7 +98,7 @@
     .grid-wrapper {
       position: relative;
       background: rgba(0, 0, 0, 0.2);
-      border: 2px solid #00bfff; /* Яркая синяя рамка */
+      border: 2px solid #00bfff;
       box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
       border-radius: 16px;
       padding: 10px;
@@ -116,7 +115,7 @@
       height: 100%;
     }
 
-    /* ЗАКРЫТАЯ ЯЧЕЙКА - яркая бирюзовая как в оригинале! */
+    /* ЗАКРЫТАЯ ЯЧЕЙКА */
     .cell {
       background: linear-gradient(180deg, #1ad1ff, #008be6);
       border-radius: 12px;
@@ -138,18 +137,18 @@
       box-shadow: 0 0 15px #66e0ff !important;
     }
 
-    /* ОТКРЫТАЯ ЯЧЕЙКА СО ЗВЕЗДОЙ - сливается с темным фоном */
+    /* ОТКРЫТАЯ ЯЧЕЙКА СО ЗВЕЗДОЙ */
     .cell.star {
       background: #080f1c !important;
       border: none !important;
       box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* ИДЕАЛЬНАЯ ГЛАДКАЯ ЗВЕЗДА БЕЗ ВНУТРЕННИХ ЛИНИЙ */
+    /* ЗВЕЗДА */
     .cell-star-svg {
-      width: 75%;
-      height: 75%;
-      filter: drop-shadow(0 0 10px rgba(255, 150, 0, 0.8));
+      width: 86%;
+      height: 86%;
+      filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.85));
       animation: star-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       pointer-events: none;
     }
@@ -284,14 +283,14 @@
 </head>
 <body>
 
-  <!-- Глобальный градиент для звёзд (чтобы не было багов с отображением) -->
+  <!-- Глобальный радиальный градиент -->
   <svg width="0" height="0" style="position: absolute;">
     <defs>
-      <radialGradient id="starGradient" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#fff5cc" />
-        <stop offset="35%" stop-color="#ffb700" />
-        <stop offset="75%" stop-color="#ff6600" />
-        <stop offset="100%" stop-color="#b32400" />
+      <radialGradient id="starGradient" cx="50%" cy="38%" r="65%">
+        <stop offset="0%" stop-color="#fff8d6" />
+        <stop offset="30%" stop-color="#ffc400" />
+        <stop offset="70%" stop-color="#ff6600" />
+        <stop offset="100%" stop-color="#cc2900" />
       </radialGradient>
     </defs>
   </svg>
@@ -314,7 +313,7 @@
     <div class="mines-counter">
       <button class="counter-btn" id="btnMinus">−</button>
       <div class="mines-text">
-        <span class="mines-val"><span id="minesCount">5</span> MINAS</span>
+        <span class="mines-val"><span id="minesCount">3</span> MINAS</span>
         <span class="mines-label">TRAPS COUNT</span>
       </div>
       <button class="counter-btn" id="btnPlus">+</button>
@@ -368,12 +367,12 @@
       var adminModal = document.getElementById('adminModal');
       var minesCountEl = document.getElementById('minesCount');
 
-      var mines = 5; // По умолчанию 5, как на скрине
-      var isSingleMode = false;
+      var mines = 3;
+      var isSingleMode = false; // false = Multiple (по умолчанию), true = Single
       var customStars = [];
       try { customStars = JSON.parse(localStorage.getItem('custom_mines_stars') || '[]'); } catch(e){}
 
-      // Переключатель режима
+      // Переключение режима Single / Multiple
       modeToggleBtn.addEventListener('click', function() {
         isSingleMode = !isSingleMode;
         if (isSingleMode) {
@@ -383,7 +382,7 @@
         }
       });
 
-      // Инициализация сетки
+      // Сборка 25 ячеек
       for (var i = 0; i < 25; i++) {
         var cell = document.createElement('div');
         cell.className = 'cell';
@@ -397,7 +396,7 @@
         adminGridEl.appendChild(aCell);
       }
 
-      // Защита админки (5 кликов)
+      // Админ-панель
       if (urlParams.get('admin') === 'dev77') adminToggleBtn.style.display = 'block';
       
       var logoClicks = 0, logoTimeout;
@@ -428,7 +427,7 @@
         adminModal.style.display = 'none';
       });
 
-      // Изменение количества мин
+      // Мины
       document.getElementById('btnMinus').addEventListener('click', function() {
         if (mines > 1) { mines--; minesCountEl.textContent = mines; }
       });
@@ -436,7 +435,6 @@
         if (mines < 24) { mines++; minesCountEl.textContent = mines; }
       });
 
-      // Функция сброса доски (Кнопка BACK)
       function resetBoard() {
         var cells = gridEl.children;
         for (var i = 0; i < cells.length; i++) {
@@ -451,18 +449,17 @@
 
       btnBack.addEventListener('click', resetBoard);
 
-      // Рисуем звезду, ссылаясь на глобальный идеальный градиент
       function getStarSvg() {
         return '<svg viewBox="0 0 100 100" class="cell-star-svg">' +
-                 '<polygon points="50,10 61,38 91,38 67,56 76,85 50,67 24,85 33,56 9,38 39,38" ' +
+                 '<polygon points="50,6 63,35 94,37 70,57 77,87 50,71 23,87 30,57 6,37 37,35" ' +
                           'fill="url(#starGradient)" ' +
-                          'stroke="#8a2700" ' +
-                          'stroke-width="2" ' +
+                          'stroke="#993300" ' +
+                          'stroke-width="2.5" ' +
                           'stroke-linejoin="round"/>' +
                '</svg>';
       }
 
-      // Генерация сигнала (Кнопка PLAY)
+      // Генерация сигнала
       btnPlay.addEventListener('click', function() {
         btnPlay.disabled = true;
         statusText.textContent = 'ANALISANDO...';
@@ -490,18 +487,26 @@
 
       function reveal() {
         var targets = [];
-        
-        if (customStars.length > 0) {
-          targets = customStars.slice();
-        } else {
-          // В Single режиме - 1 звезда. В Multiple - считаем от количества мин.
-          var count = isSingleMode ? 1 : Math.max(3, Math.floor((25 - mines) / 3));
-          if (count < 1) count = 1;
 
-          var indices = [];
-          for (var i = 0; i < 25; i++) indices.push(i);
-          indices.sort(function() { return Math.random() - 0.5; });
-          targets = indices.slice(0, count);
+        if (isSingleMode) {
+          // ОДИНОЧНЫЙ РЕЖИМ (строго 1 звезда)
+          if (customStars.length > 0) {
+            targets = [customStars[Math.floor(Math.random() * customStars.length)]];
+          } else {
+            targets = [Math.floor(Math.random() * 25)];
+          }
+        } else {
+          // МУЛЬТИ РЕЖИМ (несколько звезд)
+          if (customStars.length > 0) {
+            targets = customStars.slice();
+          } else {
+            // Расчет количества звезд под выбранные мины (от 3 до 6)
+            var count = Math.max(3, Math.min(6, 8 - Math.floor(mines / 3)));
+            var indices = [];
+            for (var i = 0; i < 25; i++) indices.push(i);
+            indices.sort(function() { return Math.random() - 0.5; });
+            targets = indices.slice(0, count);
+          }
         }
 
         var delay = 450;
